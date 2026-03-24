@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Layout Generator</title>
+    <!-- Use Vue 3 from CDN for interactivity without a build step -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Quill library for Rich Text Editing -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+            height: calc(100vh - 40px);
+        }
+
+        .builder {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 15px;
+        }
+
+        .output {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .output textarea {
+            flex: 1;
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            padding: 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre;
+            background: #ffffff;
+            color: #333333;
+            resize: none;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        button.danger {
+            background: #ef4444;
+        }
+
+        button.danger:hover {
+            background: #dc2626;
+        }
+
+        button.outline {
+            background: transparent;
+            border: 1px solid #3b82f6;
+            color: #3b82f6;
+        }
+
+        button.outline:hover {
+            background: #eff6ff;
+        }
+
+        select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #d1d5db;
+            background: white;
+            font-size: 14px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .row-ct {
+            background: #f9fafb;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .cols-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            overflow-x: auto;
+        }
+
+        .col-box {
+            flex: 1;
+            background: white;
+            border: 1px dashed #9ca3af;
+            border-radius: 6px;
+            padding: 15px;
+            min-width: 320px;
+        }
+
+        .element {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            position: relative;
+            border: 1px solid #e5e7eb;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #4b5563;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .faq-item {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .faq-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin-top: 0;
+            color: #111827;
+        }
+
+        .add-element-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .type-badge {
+            background: #e0e7ff;
+            color: #4338ca;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+            background: white;
+            border-radius: 8px;
+            border: 2px dashed #d1d5db;
+        }
+
+        /* FAQ Custom Styles */
+        .faq-details {
+            border: none !important;
+            background: transparent !important;
+            margin-bottom: 1.5rem;
+        }
+
+        .faq-summary {
+            background: #fff;
+            padding: 1.25rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            font-weight: 700;
+            cursor: pointer;
+            list-style: none;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .faq-summary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .faq-details[open] .faq-summary {
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+
+        .faq-content {
+            background: #fff;
+            padding: 1rem 1.5rem 1.5rem;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            box-shadow: 0 10px 12px -5px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app">
+        <div class="container">
+            <!-- UI Builder Column -->
+            <div class="builder">
+                <div class="header-actions" style="margin-bottom: 20px;">
+                    <h2>HTML Page Builder</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="danger" @click="clearAll" v-if="sections.length > 0">Clear All</button>
+                        <button class="outline" @click="pasteHtml">Paste HTML</button>
+                        <button @click="addSection">+ Add Section</button>
+                    </div>
+                </div>
+
+                <div v-if="sections.length === 0" class="empty-state">
+                    <h3>No sections added yet!</h3>
+                    <p>Click the "Add Section" button to start building your layout.</p>
+                </div>
+
+                <!-- Page Level Settings -->
+                <div class="section" style="border-left: 4px solid #3b82f6;">
+                    <h3>Page Settings (Custom Code)</h3>
+                    <div class="form-group">
+                        <label>Custom CSS (starts with &lt;style&gt; or just CSS rules)</label>
+                        <textarea v-model="customCss" placeholder=".my-class { color: red; }"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Custom JS (starts with &lt;script&gt; or just JS code)</label>
+                        <textarea v-model="customJs" placeholder="console.log('Hello World');"></textarea>
+                    </div>
+                </div>
+
+                <div v-for="(sec, sIdx) in sections" :key="sec.id" class="section">
+                    <div class="header-actions">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <h3 style="margin: 0;">Section {{ sIdx + 1 }}</h3>
+                            <div style="display: flex; gap: 2px;">
+                                <button class="outline" @click="moveSection(sIdx, -1)" :disabled="sIdx === 0"
+                                    style="padding: 2px 6px; font-size: 11px;">↑</button>
+                                <button class="outline" @click="moveSection(sIdx, 1)"
+                                    :disabled="sIdx === sections.length - 1"
+                                    style="padding: 2px 6px; font-size: 11px;">↓</button>
+                            </div>
+                            <select v-model="sec.bg" style="margin-left: 5px;">
+                                <option value="bg-white">Bg: White / Default</option>
+                                <option value="bg-light">Bg: Light / Gray
+                                </option>
+                            </select>
+                        </div>
+                        <button class="danger" @click="removeSection(sIdx)">Remove Section</button>
+                    </div>
+
+                    <button class="outline" @click="addRow(sec)" style="margin-top: 10px;">+ Add Row</button>
+
+                    <div v-for="(row, rIdx) in sec.rows" :key="row.id" class="row-ct">
+                        <div class="header-actions">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <h4 style="margin: 0;">Row {{ rIdx + 1 }}</h4>
+                                <div style="display: flex; gap: 2px;">
+                                    <button class="outline" @click="moveRow(sec, rIdx, -1)" :disabled="rIdx === 0"
+                                        style="padding: 2px 6px; font-size: 11px;">↑</button>
+                                    <button class="outline" @click="moveRow(sec, rIdx, 1)"
+                                        :disabled="rIdx === sec.rows.length - 1"
+                                        style="padding: 2px 6px; font-size: 11px;">↓</button>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <label
+                                    style="font-size: 13px; font-weight: normal; margin-right: 15px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                                    <input type="checkbox" v-model="row.centerAlign"> Center Align
+                                </label>
+                                <button class="outline" v-if="row.columns.length < 2" @click="addColumn(row)">+ Add
+                                    Column</button>
+                                <button class="danger" @click="removeRow(sec, rIdx)">Remove Row</button>
+                            </div>
+                        </div>
+
+                        <div class="cols-container">
+                            <div v-for="(col, cIdx) in row.columns" :key="col.id" class="col-box">
+                                <div class="header-actions">
+                                    <h4>Column {{ cIdx + 1 }} <small style="color: #6b7280; font-weight: normal;">(Max 2
+                                            per row)</small></h4>
+                                    <button class="danger" @click="removeColumn(row, cIdx)">X</button>
+                                </div>
+
+                                <div class="elements" @dragover.prevent="onDragOverColumn($event)"
+                                    @drop="onDropColumn($event, col)">
+                                    <div v-for="(el, eIdx) in col.elements" :key="el.id" class="element"
+                                        draggable="true" @dragstart="onDragStart($event, col, eIdx)"
+                                        @dragover.prevent="onDragOverElement($event)"
+                                        @drop.stop="onDropElement($event, col, eIdx)" @dragenter.prevent
+                                        style="cursor: grab;">
+                                        <div
+                                            style="display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center;">
+                                            <span class="type-badge" style="cursor: move;">☰ {{ el.type.toUpperCase() }}
+                                                ELEMENT</span>
+                                            <div style="display: flex; gap: 5px;">
+                                                <button class="outline"
+                                                    style="padding: 4px 8px; font-size: 12px; height: auto; line-height: 1;"
+                                                    @click="moveElementUp(col, eIdx)" :disabled="eIdx === 0"
+                                                    title="Move Up">↑</button>
+                                                <button class="outline"
+                                                    style="padding: 4px 8px; font-size: 12px; height: auto; line-height: 1;"
+                                                    @click="moveElementDown(col, eIdx)"
+                                                    :disabled="eIdx === col.elements.length - 1"
+                                                    title="Move Down">↓</button>
+                                                <button class="danger"
+                                                    style="padding: 4px 8px; font-size: 12px; margin-left: 5px;"
+                                                    @click="removeElement(col, eIdx)">Delete</button>
+                                            </div>
+                                        </div>
+
+                                        <div v-if="el.type === 'h1' || el.type === 'h2' || el.type === 'h3' || el.type === 'h4'"
+                                            class="form-group">
+                                            <label>Heading Text ({{ el.type.toUpperCase() }})</label>
+                                            <input type="text" v-model="el.text"
+                                                placeholder="Enter your heading here...">
+
+                                            <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 5px;">
+                                                <label
+                                                    style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; text-transform: none; font-weight: normal;">
+                                                    <input type="checkbox" v-model="el.margin" style="width: auto;"> Add
+                                                    spacing (my-4)
+                                                </label>
+                                                <label
+                                                    style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; text-transform: none; font-weight: normal;">
+                                                    <input type="checkbox" v-model="el.isCenterAlign" style="width: auto;"> Center Align
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div v-if="el.type === 'p'" class="form-group">
+                                            <div
+                                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                                <label style="margin-bottom: 0;">Rich Text / HTML Content</label>
+                                                <button class="outline"
+                                                    style="padding: 4px 8px; font-size: 11px; height: auto;"
+                                                    @click="el.showRawHtml = !el.showRawHtml">
+                                                    Toggle {{ el.showRawHtml ? 'Rich Text' : 'Raw HTML' }}
+                                                </button>
+                                            </div>
+                                            <div v-if="el.showRawHtml">
+                                                <textarea v-model="el.text"
+                                                    placeholder="<p>Enter your paragraph text here...</p>"></textarea>
+                                            </div>
+                                            <div v-else style="background: white; color: black; border-radius: 4px;">
+                                                <rich-text-editor v-model="el.text"></rich-text-editor>
+                                            </div>
+                                            <div style="margin-top: 8px;">
+                                                <label
+                                                    style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; text-transform: none; font-weight: normal; font-size: 13px; color: #4b5563;">
+                                                    <input type="checkbox" v-model="el.isCenterAlign"
+                                                        style="width: auto;"> Center Align Text (default is left)
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div v-if="el.type === 'img'">
+                                            <div class="form-group">
+                                                <label>Image Source URL</label>
+                                                <input type="text" v-model="el.src"
+                                                    placeholder="https://example.com/image.jpg">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Image ALT phrase</label>
+                                                <input type="text" v-model="el.alt"
+                                                    placeholder="Description of image for accessibility">
+                                            </div>
+                                            <div
+                                                style="margin-top: 10px; display: flex; flex-direction: column; gap: 5px;">
+                                                <label
+                                                    style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; text-transform: none; font-weight: normal; font-size: 13px; color: #4b5563;">
+                                                    <input type="checkbox" v-model="el.removeImgClass"
+                                                        style="width: auto;"> Remove 'heading-group__img' class
+                                                </label>
+                                                <label
+                                                    style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; text-transform: none; font-weight: normal; font-size: 13px; color: #4b5563;">
+                                                    <input type="checkbox" v-model="el.marginTop" style="width: auto;">
+                                                    Add margin-top (30px)
+                                                </label>
+                                                <label
+                                                    style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; text-transform: none; font-weight: normal; font-size: 13px; color: #4b5563;">
+                                                    <input type="checkbox" v-model="el.marginBottom"
+                                                        style="width: auto;"> Add margin-bottom (mb-4)
+                                                </label>
+                                                <label
+                                                    style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; text-transform: none; font-weight: normal; font-size: 13px; color: #4b5563;">
+                                                    <input type="checkbox" v-model="el.isCenterAlign"
+                                                        style="width: auto;"> Center Align
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div v-if="el.type === 'cta'">
+                                            <div class="form-group">
+                                                <label>CTA Button URL or tel:</label>
+                                                <input type="text" v-model="el.href" placeholder="tel:8888888888">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Button Text</label>
+                                                <input type="text" v-model="el.text" placeholder="Call Now...">
+                                            </div>
+                                            <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 5px;">
+                                                <label
+                                                    style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; text-transform: none; font-weight: normal; font-size: 13px; color: #4b5563;">
+                                                    <input type="checkbox" v-model="el.marginTop"
+                                                        style="width: auto;"> Add margin-top (mt-4)
+                                                </label>
+                                                <label
+                                                    style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; text-transform: none; font-weight: normal; font-size: 13px; color: #4b5563;">
+                                                    <input type="checkbox" v-model="el.marginBottom"
+                                                        style="width: auto;"> Add margin-bottom (mb-4)
+                                                </label>
+                                                <label
+                                                    style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; text-transform: none; font-weight: normal; font-size: 13px; color: #4b5563;">
+                                                    <input type="checkbox" v-model="el.isCenterAlign"
+                                                        style="width: auto;"> Center Align
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div v-if="el.type === 'cta_group'">
+                                            <div class="form-group">
+                                                <label>Button URL</label>
+                                                <input type="text" v-model="el.href"
+                                                    placeholder="#">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Button Text</label>
+                                                <input type="text" v-model="el.text" placeholder="Get help now">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Phone Tel Link</label>
+                                                <input type="text" v-model="el.telHref" placeholder="tel:8888888888">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Phone Text</label>
+                                                <input type="text" v-model="el.telText" placeholder="(888) 888-8888">
+                                            </div>
+                                            <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 5px;">
+                                                <label
+                                                    style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; text-transform: none; font-weight: normal; font-size: 13px; color: #4b5563;">
+                                                    <input type="checkbox" v-model="el.marginTop" style="width: auto;"> Add
+                                                    margin-top (mt-4)
+                                                </label>
+                                                <label
+                                                    style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; text-transform: none; font-weight: normal; font-size: 13px; color: #4b5563;">
+                                                    <input type="checkbox" v-model="el.marginBottom" style="width: auto;"> Add
+                                                    margin-bottom (mb-4)
+                                                </label>
+                                                <label
+                                                    style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; text-transform: none; font-weight: normal; font-size: 13px; color: #4b5563;">
+                                                    <input type="checkbox" v-model="el.isCenterAlign" style="width: auto;"> Center Align
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div v-if="el.type === 'faq'">
+                                            <p
+                                                style="font-size: 13px; color: #4b5563; margin-top: 0; margin-bottom: 10px;">
+                                                Enter exactly 3 questions and answers for the accordion.</p>
+                                            <div v-for="(faq, fIdx) in el.faqs" :key="fIdx" class="faq-item">
+                                                <div class="form-group">
+                                                    <label>Question {{ fIdx + 1 }}</label>
+                                                    <input type="text" v-model="faq.q" placeholder="What is...">
+                                                </div>
+                                                <div class="form-group">
+                                                    <div
+                                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                                        <label style="margin-bottom: 0;">Answer {{ fIdx + 1 }} (Rich
+                                                            Text / HTML)</label>
+                                                        <button class="outline"
+                                                            style="padding: 4px 8px; font-size: 11px; height: auto;"
+                                                            @click="faq.showRawHtml = !faq.showRawHtml">
+                                                            Toggle {{ faq.showRawHtml ? 'Rich Text' : 'Raw HTML' }}
+                                                        </button>
+                                                    </div>
+                                                    <div v-if="faq.showRawHtml">
+                                                        <textarea v-model="faq.a" rows="2"
+                                                            placeholder="The answer is..."></textarea>
+                                                    </div>
+                                                    <div v-else
+                                                        style="background: white; color: black; border-radius: 4px;">
+                                                        <rich-text-editor v-model="faq.a"></rich-text-editor>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="add-element-group">
+                                    <select v-model="col.selectedType">
+                                        <option value="h1">H1 Heading</option>
+                                        <option value="h2">H2 Heading</option>
+                                        <option value="h3">H3 Heading</option>
+                                        <option value="h4">H4 Heading</option>
+                                        <option value="p">Rich Text / HTML</option>
+                                        <option value="img">Image</option>
+                                        <option value="cta">CTA Button</option>
+                                        <option value="cta_group">CTA Group (Button + Phone)</option>
+                                        <option value="faq">FAQ Accordion (3 Items)</option>
+                                    </select>
+                                    <button @click="addElement(col, col.selectedType)">+ Add Element</button>
+                                </div>
+                            </div>
+
+                            <div v-if="row.columns.length === 0"
+                                style="padding: 20px; text-align: center; color: #9ca3af; width: 100%; font-style: italic;">
+                                Add a column to this row to insert elements.
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom CTA for adding a section -->
+                <div v-if="sections.length > 0" class="header-actions"
+                    style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed #d1d5db; justify-content: center;">
+                    <button @click="addSection" style="padding: 12px 24px; font-size: 16px;">+ Add New Section</button>
+                </div>
+
+            </div>
+
+            <!-- Code Output Column -->
+            <div class="output">
+                <div class="header-actions" style="margin-bottom: 20px;">
+                    <h2>Generated HTML</h2>
+                    <button @click="copyToClipboard" class="outline">Copy to Clipboard</button>
+                </div>
+                <textarea readonly :value="generatedHtml"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        const RichTextEditor = {
+            props: ['modelValue'],
+            template: `
+    <div class="rich-text-wrapper">
+      <div ref="editor" class="quill-editor"></div>
+    </div>
+  `,
+            mounted() {
+                this.quill = new Quill(this.$refs.editor, {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [
+                            ['bold', 'italic', 'underline'],
+                            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                            ['link', 'clean']
+                        ]
+                    }
+                });
+                // Set initial content securely
+                this.quill.root.innerHTML = this.modelValue || '';
+
+                // Listen for changes
+                this.quill.on('text-change', () => {
+                    this.$emit('update:modelValue', this.quill.root.innerHTML);
+                });
+            },
+            watch: {
+                modelValue(newVal) {
+                    if (newVal !== this.quill.root.innerHTML) {
+                        this.quill.root.innerHTML = newVal || '';
+                    }
+                }
+            }
+        };
+
+        const app = createApp({
+            components: {
+                'rich-text-editor': RichTextEditor
+            },
+            data() {
+                return {
+                    sections: [],
+                    customCss: '',
+                    customJs: '',
+                    draggedItem: null
+                }
+            },
+            mounted() {
+                const saved = localStorage.getItem('htmlBuilderSections');
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        if (Array.isArray(data)) {
+                            this.sections = data;
+                        } else {
+                            this.sections = data.sections || [];
+                            this.customCss = data.customCss || '';
+                            this.customJs = data.customJs || '';
+                        }
+                    } catch (e) {
+                        console.error("Failed to parse saved sections", e);
+                    }
+                }
+            },
+            watch: {
+                sections: {
+                    handler() { this.saveData(); },
+                    deep: true
+                },
+                customCss: {
+                    handler() { this.saveData(); }
+                },
+                customJs: {
+                    handler() { this.saveData(); }
+                }
+            },
+            computed: {
+                generatedHtml() {
+                    if (this.sections.length === 0) return '<!-- Your generated HTML will appear here -->';
+
+                    let finalHtml = '';
+                    let allFaqs = [];
+
+                    // Add Custom CSS
+                    if (this.customCss && this.customCss.trim()) {
+                        let css = this.customCss.trim();
+                        if (!css.startsWith('<style')) css = `<style>\n${css}\n</style>`;
+                        finalHtml += `${css}\n\n`;
+                    }
+
+                    this.sections.forEach(sec => {
+                        let bgClass = sec.bg || 'bg-white';
+                        finalHtml += `<section class="py-5 ${bgClass}">\n`;
+                        finalHtml += `  <div class="container">\n`;
+
+                        sec.rows.forEach(row => {
+                            let isTwoCols = row.columns.length === 2;
+                            let rowAlign = row.centerAlign ? ' text-center' : '';
+
+                            if (isTwoCols) {
+                                finalHtml += `    <div class="row align-items-center${rowAlign}">\n`;
+                            } else {
+                                finalHtml += `    <div class="row${rowAlign}">\n`;
+                            }
+
+                            row.columns.forEach((col, cIdx) => {
+                                if (isTwoCols) {
+                                    finalHtml += `      <div class="col-lg-6">\n`;
+                                } else {
+                                    finalHtml += `      <div class="col-12">\n`;
+                                }
+
+                                col.elements.forEach(el => {
+                                    let spacing = el.margin ? ' my-4' : '';
+                                    let alignClass = el.isCenterAlign ? ' text-center' : '';
+
+                                    if (el.type === 'h1') {
+                                        finalHtml += `        <h1 class="h1${spacing}${alignClass}">${el.text || 'Heading 1'}</h1>\n`;
+                                    } else if (el.type === 'h2') {
+                                        finalHtml += `        <h2 class="h2${spacing}${alignClass}">${el.text || 'Heading 2'}</h2>\n`;
+                                    } else if (el.type === 'h3') {
+                                        finalHtml += `        <h3 class="h3${spacing}${alignClass}">${el.text || 'Heading 3'}</h3>\n`;
+                                    } else if (el.type === 'h4') {
+                                        finalHtml += `        <h4 class="h4${spacing}${alignClass}">${el.text || 'Heading 4'}</h4>\n`;
+                                    } else if (el.type === 'p') {
+                                        finalHtml += `        <div class="lead${spacing}${alignClass}">\n          ${el.text || '<p>Paragraph text...</p>'}\n        </div>\n`;
+                                    } else if (el.type === 'img') {
+                                        let imgMargins = [];
+                                        if (el.marginTop) imgMargins.push('mt-4');
+                                        if (el.marginBottom) imgMargins.push('mb-4');
+                                        let alignClass = el.isCenterAlign ? ' text-center' : '';
+                                        let imgAlignClass = el.isCenterAlign ? ' d-block mx-auto' : '';
+                                        let figureClass = `figure w-100${alignClass} ${imgMargins.join(' ')}`.trim();
+                                        finalHtml += `        <figure class="${figureClass}">\n`;
+                                        finalHtml += `          <img class="figure-img img-fluid${imgAlignClass}" src="${el.src || '#'}" alt="${el.alt || 'Image'}" loading="lazy">\n`;
+                                        finalHtml += `        </figure>\n`;
+                                    } else if (el.type === 'cta') {
+                                        let ctaAlign = ' text-start';
+                                        if (el.isCenterAlign || row.centerAlign) ctaAlign = ' text-center';
+                                        let ctaMargins = [];
+                                        if (el.marginTop) ctaMargins.push('mt-4');
+                                        if (el.marginBottom) ctaMargins.push('mb-4');
+                                        let ctaClass = ctaMargins.join(' ').trim();
+                                        if (ctaClass) ctaClass = ' ' + ctaClass;
+                                        finalHtml += `        <div class="${ctaAlign}${ctaClass}">\n`;
+                                        finalHtml += `          <a class="btn btn-primary" href="${el.href || '#'}">${el.text || 'Click Here'}</a>\n`;
+                                        finalHtml += `        </div>\n`;
+                                    } else if (el.type === 'cta_group') {
+                                        let groupMargins = [];
+                                        if (el.marginTop) groupMargins.push('mt-4');
+                                        if (el.marginBottom) groupMargins.push('mb-4');
+                                        let groupSpacing = groupMargins.join(' ').trim();
+                                        if (groupSpacing) groupSpacing = ' ' + groupSpacing;
+                                        let groupAlign = el.isCenterAlign ? ' justify-content-center' : '';
+                                        finalHtml += `        <div class="d-flex flex-wrap align-items-center gap-3${groupSpacing}${groupAlign}">\n`;
+                                        finalHtml += `          <a href="${el.href || '#'}" class="btn btn-primary">${el.text || 'Get help now'}</a>\n`;
+                                        finalHtml += `          <div class="d-flex align-items-center gap-2">\n`;
+                                        finalHtml += `            <span class="small text-muted">or</span>\n`;
+                                        finalHtml += `            <a href="${el.telHref || 'tel:8888888888'}" class="text-decoration-none fw-bold">\n`;
+                                        finalHtml += `              <span>${el.telText || '(888) 888-8888'}</span>\n`;
+                                        finalHtml += `            </a>\n`;
+                                        finalHtml += `          </div>\n`;
+                                        finalHtml += `        </div>\n`;
+                                    } else if (el.type === 'faq') {
+                                        finalHtml += `        <div class="my-4">\n`;
+                                        el.faqs.forEach((faq, fIdx) => {
+                                            if (faq.q && faq.a) {
+                                                finalHtml += `          <details class="faq-details">\n`;
+                                                finalHtml += `            <summary class="faq-summary">${faq.q}</summary>\n`;
+                                                finalHtml += `            <div class="faq-content">\n`;
+                                                finalHtml += `              ${faq.a}\n`;
+                                                finalHtml += `            </div>\n`;
+                                                finalHtml += `          </details>\n`;
+                                                allFaqs.push(faq);
+                                            }
+                                        });
+                                        finalHtml += `        </div>\n`;
+                                        
+                                        // Add Default Styles for FAQ if not already added
+                                        if (!finalHtml.includes('/* FAQ Styles */')) {
+                                            finalHtml = `<style>\n/* FAQ Styles */\n.faq-details { border: none; margin-bottom: 1.5rem; }\n.faq-summary { background: #fff; padding: 1.25rem 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); font-weight: 700; cursor: pointer; list-style: none; transition: all 0.2s ease; }\n.faq-summary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); }\n.faq-details[open] .faq-summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }\n.faq-content { background: #fff; padding: 1rem 1.5rem 1.5rem; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; box-shadow: 0 10px 12px -5px rgba(0,0,0,0.05); }\n</style>\n\n` + finalHtml;
+                                        }
+                                    }
+                                });
+
+                                finalHtml += `      </div>\n`;
+                            });
+
+                            finalHtml += `    </div>\n`;
+                        });
+
+                        finalHtml += `  </div>\n`;
+                        finalHtml += `</section>\n\n`;
+                    });
+
+                    // Append SEO FAQ Schema if applicable
+                    if (allFaqs.length > 0) {
+                        let schema = {
+                            "@context": "https://schema.org",
+                            "@type": "FAQPage",
+                            "mainEntity": allFaqs.map(f => ({
+                                "@type": "Question",
+                                "name": f.q,
+                                "acceptedAnswer": {
+                                    "@type": "Answer",
+                                    "text": f.a
+                                }
+                            }))
+                        };
+                        finalHtml += `<!-- FAQ Schema Metadata -->\n`;
+                        finalHtml += `<script type="application/ld+json">\n${JSON.stringify(schema, null, 2)}\n<\/script>\n`;
+                    }
+
+                    // Add Custom JS
+                    if (this.customJs && this.customJs.trim()) {
+                        let js = this.customJs.trim();
+                        if (!js.startsWith('<script')) js = `<script>\n${js}\n<\/script>`;
+                        finalHtml += `\n${js}\n`;
+                    }
+
+                    return finalHtml;
+                }
+            },
+            methods: {
+                addSection() {
+                    // Create a section with one default row
+                    this.sections.push({
+                        id: Date.now(),
+                        bg: 'bg-white',
+                        rows: [
+                            { id: Date.now() + 1, columns: [], centerAlign: false }
+                        ]
+                    });
+                },
+                addRow(section) {
+                    section.rows.push({ id: Date.now(), columns: [], centerAlign: false });
+                },
+                addColumn(row) {
+                    if (row.columns.length < 2) {
+                        row.columns.push({ id: Date.now(), elements: [], selectedType: 'h1' });
+                    } else {
+                        alert("Maximum 2 columns allowed per row to maintain clean side-by-side design.");
+                    }
+                },
+                addElement(column, type) {
+                    if (!type) type = 'h1'; // fallback
+                    const el = { id: Date.now(), type, isCenterAlign: false };
+
+                    // Initialize properties based on element type
+                    if (['h1', 'h2', 'h3', 'h4'].includes(type)) {
+                        el.text = '';
+                        el.margin = ['h1', 'h2'].includes(type); // default h1 and h2 to true
+                    }
+                    if (type === 'p') {
+                        el.text = '';
+                        el.showRawHtml = false;
+                        el.isCenterAlign = false;
+                    }
+                    if (type === 'cta') {
+                        el.href = 'tel:8888888888';
+                        el.text = 'Call (888) 888-8888 to Speak with Our Caring Team';
+                        el.marginTop = true;
+                        el.marginBottom = false;
+                    }
+                    if (type === 'cta_group') {
+                        el.href = '#';
+                        el.text = 'Get help now';
+                        el.telHref = 'tel:8888888888';
+                        el.telText = '(888) 888-8888';
+                        el.marginTop = true;
+                        el.marginBottom = true;
+                    }
+                    if (type === 'img') {
+                        el.src = '';
+                        el.alt = '';
+                        el.removeImgClass = false;
+                        el.marginTop = false;
+                        el.marginBottom = false;
+                    }
+                    if (type === 'faq') {
+                        el.faqs = [
+                            { q: '', a: '', showRawHtml: false },
+                            { q: '', a: '', showRawHtml: false },
+                            { q: '', a: '', showRawHtml: false }
+                        ];
+                    }
+
+                    column.elements.push(el);
+                },
+                removeSection(idx) {
+                    if (confirm("Are you sure you want to remove this section?")) {
+                        this.sections.splice(idx, 1);
+                    }
+                },
+                removeRow(sec, idx) { sec.rows.splice(idx, 1); },
+                removeColumn(row, idx) { row.columns.splice(idx, 1); },
+                removeElement(col, idx) { col.elements.splice(idx, 1); },
+                moveSection(idx, dir) {
+                    const target = idx + dir;
+                    if (target >= 0 && target < this.sections.length) {
+                        const item = this.sections.splice(idx, 1)[0];
+                        this.sections.splice(target, 0, item);
+                    }
+                },
+                moveRow(sec, idx, dir) {
+                    const target = idx + dir;
+                    if (target >= 0 && target < sec.rows.length) {
+                        const item = sec.rows.splice(idx, 1)[0];
+                        sec.rows.splice(target, 0, item);
+                    }
+                },
+                pasteHtml() {
+                    const html = prompt("Paste your generated HTML here:");
+                    if (!html) return;
+                    this.parseGeneratedHtml(html);
+                },
+                parseGeneratedHtml(html) {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const tempDiv = doc.body;
+
+                    // Extract Custom CSS
+                    let extractedCss = '';
+                    const styleTags = doc.querySelectorAll('style');
+                    styleTags.forEach(tag => {
+                        if (!tag.innerHTML.includes('/* FAQ Styles */')) {
+                            extractedCss += tag.innerHTML + '\n';
+                        }
+                    });
+                    this.customCss = extractedCss.trim();
+
+                    // Extract Custom JS
+                    let extractedJs = '';
+                    const scriptTags = doc.querySelectorAll('script');
+                    scriptTags.forEach(tag => {
+                        if (tag.type !== 'application/ld+json' && tag.innerHTML.trim()) {
+                            extractedJs += tag.innerHTML + '\n';
+                        }
+                    });
+                    this.customJs = extractedJs.trim();
+
+                    const sections = [];
+                    const sectionEls = tempDiv.querySelectorAll('section');
+
+                    sectionEls.forEach(secEl => {
+                        const sec = {
+                            id: Date.now() + Math.random(),
+                            bg: Array.from(secEl.classList).find(c => c.startsWith('bg-')) || 'bg-white',
+                            rows: []
+                        };
+
+                        const rowEls = secEl.querySelectorAll('.row');
+                        rowEls.forEach(rowEl => {
+                            const row = {
+                                id: Date.now() + Math.random(),
+                                centerAlign: rowEl.classList.contains('text-center'),
+                                columns: []
+                            };
+
+                            const colEls = rowEl.children;
+                            Array.from(colEls).forEach(colEl => {
+                                const col = {
+                                    id: Date.now() + Math.random(),
+                                    elements: [],
+                                    selectedType: 'h1'
+                                };
+
+                                // Iterate through potential elements
+                                Array.from(colEl.children).forEach(elEl => {
+                                    const typeMap = { 'H1': 'h1', 'H2': 'h2', 'H3': 'h3', 'H4': 'h4', 'FIGURE': 'img' };
+                                    let type = typeMap[elEl.tagName] || '';
+
+                                    if (!type && elEl.classList.contains('lead')) type = 'p';
+                                    if (!type && elEl.classList.contains('faq-details')) return; // Details handled by parent .my-4
+                                    if (!type && elEl.classList.contains('my-4')) {
+                                        if (elEl.querySelector('.faq-details')) type = 'faq';
+                                    }
+                                    if (!type) {
+                                        if (elEl.querySelector('.btn-primary')) {
+                                            if (elEl.classList.contains('d-flex')) type = 'cta_group';
+                                            else type = 'cta';
+                                        }
+                                    }
+
+                                    if (!type) return;
+
+                                    const el = { id: Date.now() + Math.random(), type, isCenterAlign: elEl.classList.contains('text-center') };
+
+                                    if (['h1', 'h2', 'h3', 'h4'].includes(type)) {
+                                        el.text = elEl.innerText;
+                                        el.margin = elEl.classList.contains('my-4');
+                                    } else if (type === 'p') {
+                                        el.text = elEl.innerHTML.trim();
+                                        el.margin = elEl.classList.contains('my-4');
+                                        el.showRawHtml = true;
+                                    } else if (type === 'img') {
+                                        const img = elEl.querySelector('img');
+                                        el.src = img ? img.src : '';
+                                        el.alt = img ? img.alt : '';
+                                        el.marginTop = elEl.classList.contains('mt-4');
+                                        el.marginBottom = elEl.classList.contains('mb-4');
+                                        el.isCenterAlign = elEl.classList.contains('text-center');
+                                    } else if (type === 'cta') {
+                                        const a = elEl.querySelector('a');
+                                        el.text = a ? a.innerText : '';
+                                        el.href = a ? a.getAttribute('href') : '#';
+                                        el.marginTop = elEl.classList.contains('mt-4');
+                                        el.marginBottom = elEl.classList.contains('mb-4');
+                                    } else if (type === 'cta_group') {
+                                        const aPrime = elEl.querySelector('.btn-primary');
+                                        const aTel = elEl.querySelector('a.text-decoration-none');
+                                        el.text = aPrime ? aPrime.innerText : '';
+                                        el.href = aPrime ? aPrime.getAttribute('href') : '#';
+                                        el.telText = aTel ? aTel.innerText.trim() : '';
+                                        el.telHref = aTel ? aTel.getAttribute('href') : 'tel:';
+                                        el.marginTop = elEl.classList.contains('mt-4');
+                                        el.marginBottom = elEl.classList.contains('mb-4');
+                                        el.isCenterAlign = elEl.classList.contains('justify-content-center');
+                                    } else if (type === 'faq') {
+                                        el.faqs = Array.from(elEl.querySelectorAll('.faq-details')).map(det => ({
+                                            q: det.querySelector('.faq-summary').innerText,
+                                            a: det.querySelector('.faq-content').innerHTML.trim(),
+                                            showRawHtml: true
+                                        }));
+                                    }
+
+                                    col.elements.push(el);
+                                });
+
+                                row.columns.push(col);
+                            });
+                            sec.rows.push(row);
+                        });
+                        sections.push(sec);
+                    });
+
+                    if (sections.length > 0) {
+                        this.sections = sections;
+                        alert("Logic reconstructed! Please review your sections.");
+                    } else {
+                        alert("Could not find any sections to parse. Make sure you are pasting the full generated HTML.");
+                    }
+                },
+                clearAll() {
+                    if (confirm("Are you sure you want to delete all sections and content? This cannot be undone.")) {
+                        this.sections = [];
+                        this.customCss = '';
+                        this.customJs = '';
+                    }
+                },
+                saveData() {
+                    localStorage.setItem('htmlBuilderSections', JSON.stringify({
+                        sections: this.sections,
+                        customCss: this.customCss,
+                        customJs: this.customJs
+                    }));
+                },
+                moveElementUp(col, idx) {
+                    if (idx > 0) {
+                        const el = col.elements[idx];
+                        col.elements.splice(idx, 1);
+                        col.elements.splice(idx - 1, 0, el);
+                    }
+                },
+                moveElementDown(col, idx) {
+                    if (idx < col.elements.length - 1) {
+                        const el = col.elements[idx];
+                        col.elements.splice(idx, 1);
+                        col.elements.splice(idx + 1, 0, el);
+                    }
+                },
+                onDragStart(event, col, idx) {
+                    this.draggedItem = { col, idx };
+                    event.dataTransfer.effectAllowed = 'move';
+                    event.dataTransfer.dropEffect = 'move';
+                    // Required for Firefox to drag
+                    event.dataTransfer.setData('text/plain', idx);
+                },
+                onDragOverElement(event) {
+                    event.dataTransfer.dropEffect = 'move';
+                },
+                onDragOverColumn(event) {
+                    event.dataTransfer.dropEffect = 'move';
+                },
+                onDropElement(event, targetCol, targetIdx) {
+                    if (!this.draggedItem) return;
+
+                    const { col: sourceCol, idx: sourceIdx } = this.draggedItem;
+
+                    if (sourceCol === targetCol) {
+                        if (sourceIdx !== targetIdx) {
+                            const mapEl = sourceCol.elements[sourceIdx];
+                            sourceCol.elements.splice(sourceIdx, 1);
+                            targetCol.elements.splice(targetIdx, 0, mapEl);
+                        }
+                    } else {
+                        const mapEl = sourceCol.elements[sourceIdx];
+                        sourceCol.elements.splice(sourceIdx, 1);
+                        targetCol.elements.splice(targetIdx, 0, mapEl);
+                    }
+
+                    this.draggedItem = null;
+                },
+                onDropColumn(event, targetCol) {
+                    // If dropped onto the empty space of a column rather than a specific element
+                    if (!this.draggedItem) return;
+
+                    const { col: sourceCol, idx: sourceIdx } = this.draggedItem;
+
+                    // Prevent action if we dropped back onto the same exact column area
+                    // (usually handled by onDropElement instead if hovering over actual elements)
+                    if (sourceCol !== targetCol && targetCol.elements.length === 0) {
+                        const mapEl = sourceCol.elements[sourceIdx];
+                        sourceCol.elements.splice(sourceIdx, 1);
+                        targetCol.elements.push(mapEl);
+                    }
+
+                    this.draggedItem = null;
+                },
+                copyToClipboard() {
+                    if (this.sections.length === 0) return;
+                    navigator.clipboard.writeText(this.generatedHtml).then(() => {
+                        alert("HTML code copied to clipboard successfully!");
+                    }).catch(err => {
+                        console.error("Failed to copy text: ", err);
+                    });
+                }
+            }
+        }).mount('#app')
+    </script>
+
+</body>
+
+</html>
