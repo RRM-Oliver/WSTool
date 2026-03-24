@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemeGen - AI Meme Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Generative AI SDK -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@google/generative-ai": "https://esm.run/@google/generative-ai"
+        }
+      }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="../index.html" class="back-link">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Tools
+            </a>
+            <h1>MemeGen</h1>
+            <p class="subtitle">Upload a photo and let AI help you memefy it.</p>
+        </header>
+
+        <main class="app-grid">
+            <!-- Left Panel: Controls -->
+            <section class="controls-panel">
+                <div class="card">
+                    <div class="input-group">
+                        <label for="apiKey">Gemini API Key</label>
+                        <input type="password" id="apiKey" placeholder="Enter your Gemini API key...">
+                        <small>Get one for free at <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a></small>
+                    </div>
+
+                    <div class="drop-zone" id="dropZone">
+                        <input type="file" id="fileInput" accept="image/*" hidden>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p>Upload Photo or Drag & Drop</p>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="aiPrompt">Meme Vibe / Description</label>
+                        <textarea id="aiPrompt" rows="2" placeholder="e.g., 'A cat wearing sunglasses', 'Sarcastic morning vibe'"></textarea>
+                        <div class="button-row">
+                            <button id="generateTextBtn" class="secondary-btn">AI Caption (Free)</button>
+                            <button id="generateImgBtn" class="secondary-btn">AI Image (Free)</button>
+                        </div>
+                    </div>
+
+                    <div id="aiCaptionsList" class="captions-list hidden">
+                        <!-- AI captions will appear here -->
+                    </div>
+
+                    <details class="advanced-settings">
+                        <summary>Advanced: Gemini AI (Vision)</summary>
+                        <div class="input-group">
+                            <label for="apiKey">Gemini API Key</label>
+                            <input type="password" id="apiKey" placeholder="Enter key for Vision analysis...">
+                            <button id="geminiBtn" class="primary-btn">
+                                Gemini AI (Requires Key)
+                            </button>
+                        </div>
+                    </details>
+
+                    <hr>
+
+                    <div class="manual-controls">
+                        <div class="input-group">
+                            <label for="topText">Top Text</label>
+                            <input type="text" id="topText" placeholder="TAP TO ADD TEXT">
+                        </div>
+                        <div class="input-group">
+                            <label for="bottomText">Bottom Text</label>
+                            <input type="text" id="bottomText" placeholder="TAP TO ADD TEXT">
+                        </div>
+                        
+                        <div class="style-controls">
+                            <div class="input-row">
+                                <label>FontSize</label>
+                                <input type="range" id="fontSize" min="20" max="100" value="50">
+                            </div>
+                            <div class="input-row">
+                                <label>Mode</label>
+                                <select id="textStyle">
+                                    <option value="classic">Classic (Impact)</option>
+                                    <option value="modern">Modern (Clean)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="downloadBtn" class="secondary-btn" disabled>
+                        Download Meme
+                    </button>
+                </div>
+            </section>
+
+            <!-- Right Panel: Preview -->
+            <section class="preview-panel">
+                <div class="canvas-container">
+                    <canvas id="memeCanvas"></canvas>
+                    <div id="placeholder" class="placeholder-msg">
+                        <p>Upload an image to start</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
