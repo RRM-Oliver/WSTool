@@ -635,7 +635,8 @@
                                         finalHtml += `          <img class="figure-img img-fluid${imgAlignClass}" src="${el.src || '#'}" alt="${el.alt || 'Image'}" loading="lazy">\n`;
                                         finalHtml += `        </figure>\n`;
                                         if (el.align === 'right') finalHtml += `        <div class="clearfix"></div>\n`;
-                                                               else if (el.type === 'cta') {
+                                    } 
+                                    else if (el.type === 'cta') {
                                         let cClasses = [clsid];
                                         if (el.mt !== undefined && el.mt !== '') cClasses.push(`mt-${el.mt}`);
                                         if (el.mb !== undefined && el.mb !== '') cClasses.push(`mb-${el.mb}`);
@@ -684,18 +685,17 @@
                                         });
                                         finalHtml += `        </div>\n`;
                                     } 
-         } 
                                     else if (el.type === 'faq') {
                                         faqFound = true;
                                         
-                                        if (el.fsMobile && el.fsMobile != 18) cssRules.push(`.${clsid}-summary h3 { font-size: ${el.fsMobile}px; margin: 0; }`);
-                                        else cssRules.push(`.${clsid}-summary h3 { font-size: 18px; margin: 0; }`);
+                                        if (el.fsMobile && el.fsMobile != 18) cssRules.push(`.${clsid}-summary h3 { font-size: ${el.fsMobile}px !important; margin: 0 !important; }`);
+                                        else cssRules.push(`.${clsid}-summary h3 { font-size: 18px !important; margin: 0 !important; }`);
                                         
-                                        if (el.fsTablet && el.fsTablet != 20) cssRules.push(`@media (min-width: 768px) { .${clsid}-summary h3 { font-size: ${el.fsTablet}px; } }`);
-                                        else cssRules.push(`@media (min-width: 768px) { .${clsid}-summary h3 { font-size: 20px; } }`);
+                                        if (el.fsTablet && el.fsTablet != 20) cssRules.push(`@media (min-width: 768px) { .${clsid}-summary h3 { font-size: ${el.fsTablet}px !important; } }`);
+                                        else cssRules.push(`@media (min-width: 768px) { .${clsid}-summary h3 { font-size: 20px !important; } }`);
                                         
-                                        if (el.fsDesktop && el.fsDesktop != 24) cssRules.push(`@media (min-width: 992px) { .${clsid}-summary h3 { font-size: ${el.fsDesktop}px; } }`);
-                                        else cssRules.push(`@media (min-width: 992px) { .${clsid}-summary h3 { font-size: 24px; } }`);
+                                        if (el.fsDesktop && el.fsDesktop != 24) cssRules.push(`@media (min-width: 992px) { .${clsid}-summary h3 { font-size: ${el.fsDesktop}px !important; } }`);
+                                        else cssRules.push(`@media (min-width: 992px) { .${clsid}-summary h3 { font-size: 24px !important; } }`);
                                         
                                         finalHtml += `        <div class="faq-container my-4">\n`;
                                         el.faqs.forEach((faq) => {
@@ -738,7 +738,7 @@
                     }
 
                     if (faqFound) {
-                        finalCss += `/* FAQ Component Styles */\n.faq-details { border: none; margin-bottom: 1.5rem; }\n.faq-summary { background: #fff; padding: 1.25rem 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); font-weight: 700; cursor: pointer; list-style: none; transition: all 0.2s ease; position: relative; }\n.faq-summary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); }\n.faq-details[open] .faq-summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }\n.faq-content { background: #fff; padding: 1rem 1.5rem 1.5rem; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; box-shadow: 0 10px 12px -5px rgba(0,0,0,0.05); }\n\n`;
+                        finalCss += `/* FAQ Component Styles */\n.faq-details { border: none !important; margin-bottom: 1.5rem !important; }\n.faq-summary { background: #fff !important; padding: 1.25rem 1.5rem !important; border-radius: 12px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important; font-weight: 700 !important; cursor: pointer !important; list-style: none !important; transition: all 0.2s ease !important; position: relative !important; }\n.faq-summary:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 16px rgba(0,0,0,0.08) !important; }\n.faq-details[open] .faq-summary { border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important; }\n.faq-content { background: #fff !important; padding: 1rem 1.5rem 1.5rem !important; border-bottom-left-radius: 12px !important; border-bottom-right-radius: 12px !important; box-shadow: 0 10px 12px -5px rgba(0,0,0,0.05) !important; }\n\n`;
                     }
 
                     // Add Theme Styles
