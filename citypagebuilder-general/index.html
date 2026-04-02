@@ -688,20 +688,20 @@
                                     else if (el.type === 'faq') {
                                         faqFound = true;
                                         
-                                        if (el.fsMobile && el.fsMobile != 18) cssRules.push(`.${clsid}-summary h3 { font-size: ${el.fsMobile}px !important; margin: 0 !important; }`);
-                                        else cssRules.push(`.${clsid}-summary h3 { font-size: 18px !important; margin: 0 !important; }`);
+                                        if (el.fsMobile && el.fsMobile != 18) cssRules.push(`.${clsid}-summary { font-size: ${el.fsMobile}px !important; margin: 0 !important; }`);
+                                        else cssRules.push(`.${clsid}-summary { font-size: 18px !important; margin: 0 !important; }`);
                                         
-                                        if (el.fsTablet && el.fsTablet != 20) cssRules.push(`@media (min-width: 768px) { .${clsid}-summary h3 { font-size: ${el.fsTablet}px !important; } }`);
-                                        else cssRules.push(`@media (min-width: 768px) { .${clsid}-summary h3 { font-size: 20px !important; } }`);
+                                        if (el.fsTablet && el.fsTablet != 20) cssRules.push(`@media (min-width: 768px) { .${clsid}-summary { font-size: ${el.fsTablet}px !important; } }`);
+                                        else cssRules.push(`@media (min-width: 768px) { .${clsid}-summary { font-size: 20px !important; } }`);
                                         
-                                        if (el.fsDesktop && el.fsDesktop != 24) cssRules.push(`@media (min-width: 992px) { .${clsid}-summary h3 { font-size: ${el.fsDesktop}px !important; } }`);
-                                        else cssRules.push(`@media (min-width: 992px) { .${clsid}-summary h3 { font-size: 24px !important; } }`);
+                                        if (el.fsDesktop && el.fsDesktop != 24) cssRules.push(`@media (min-width: 992px) { .${clsid}-summary { font-size: ${el.fsDesktop}px !important; } }`);
+                                        else cssRules.push(`@media (min-width: 992px) { .${clsid}-summary { font-size: 24px !important; } }`);
                                         
                                         finalHtml += `        <div class="faq-container my-4">\n`;
                                         el.faqs.forEach((faq) => {
                                             if (faq.q) {
                                                 finalHtml += `          <details class="faq-details">\n`;
-                                                finalHtml += `            <summary class="faq-summary ${clsid}-summary"><h3>${faq.q}</h3></summary>\n`;
+                                                finalHtml += `            <summary class="faq-summary ${clsid}-summary">${faq.q}</summary>\n`;
                                                 finalHtml += `            <div class="faq-content">\n`;
                                                 finalHtml += `              ${faq.a}\n`;
                                                 finalHtml += `            </div>\n`;
@@ -738,7 +738,7 @@
                     }
 
                     if (faqFound) {
-                        finalCss += `/* FAQ Component Styles */\n.faq-details { border: none !important; margin-bottom: 1.5rem !important; }\n.faq-summary { background: #fff !important; padding: 1.25rem 1.5rem !important; border-radius: 12px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important; font-weight: 700 !important; cursor: pointer !important; list-style: none !important; transition: all 0.2s ease !important; position: relative !important; }\n.faq-summary:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 16px rgba(0,0,0,0.08) !important; }\n.faq-details[open] .faq-summary { border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important; }\n.faq-content { background: #fff !important; padding: 1rem 1.5rem 1.5rem !important; border-bottom-left-radius: 12px !important; border-bottom-right-radius: 12px !important; box-shadow: 0 10px 12px -5px rgba(0,0,0,0.05) !important; }\n\n`;
+                        finalCss += `/* FAQ Component Styles */\n.faq-details { border: none !important; margin-bottom: 1.5rem !important; }\n.faq-details summary::-webkit-details-marker { display: none !important; }\n.faq-summary { background: #fff !important; padding: 1.25rem 1.5rem !important; border-radius: 12px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important; font-weight: 700 !important; cursor: pointer !important; list-style: none !important; transition: all 0.2s ease !important; position: relative !important; display: block !important; }\n.faq-summary:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 16px rgba(0,0,0,0.08) !important; }\n.faq-details[open] .faq-summary { border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important; }\n.faq-content { background: #fff !important; padding: 1rem 1.5rem 1.5rem !important; border-bottom-left-radius: 12px !important; border-bottom-right-radius: 12px !important; box-shadow: 0 10px 12px -5px rgba(0,0,0,0.05) !important; }\n\n`;
                     }
 
                     // Add Theme Styles
