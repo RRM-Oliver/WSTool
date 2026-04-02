@@ -105,6 +105,7 @@
                                     <div><label style="font-size: 10px;">Bg Color</label><input type="color" v-model="theme.cta.bgColor" style="height: 24px; padding: 0;"></div>
                                     <div><label style="font-size: 10px;">Hover Color</label><input type="color" v-model="theme.cta.bgHoverColor" style="height: 24px; padding: 0;"></div>
                                     <div><label style="font-size: 10px;">Radius</label><input type="number" v-model="theme.cta.borderRadius" style="font-size: 12px; height: 24px; padding: 4px;"></div>
+                                    <div><label style="font-size: 10px;">Font Size</label><input type="number" v-model="theme.cta.fontSize" style="font-size: 12px; height: 24px; padding: 4px;"></div>
                                 </div>
                                 <div class="flex-row">
                                     <div><label style="font-size: 10px;">PT</label><select v-model="theme.cta.pt" style="font-size: 11px; height: 24px;"><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
@@ -429,7 +430,7 @@
                         h3: { fsMobile: 24, fsTablet: 26, fsDesktop: 28, color: '#111827', mb: '2', mt: '0', fontFamily: '' },
                         h4: { fsMobile: 20, fsTablet: 22, fsDesktop: 24, color: '#111827', mb: '2', mt: '0', fontFamily: '' },
                         h5: { fsMobile: 18, fsTablet: 18, fsDesktop: 20, color: '#111827', mb: '2', mt: '0', fontFamily: '' },
-                        cta: { pt: '2', pb: '2', ps: '4', pe: '4', textColor: '#ffffff', bgColor: '#0d6efd', bgHoverColor: '#0b5ed7', borderRadius: '6', fontFamily: '' }
+                        cta: { pt: '2', pb: '2', ps: '4', pe: '4', textColor: '#ffffff', bgColor: '#0d6efd', bgHoverColor: '#0b5ed7', borderRadius: '6', fontFamily: '', fontSize: 16 }
                     }
                 }
             },
@@ -755,6 +756,7 @@
                     const tc = this.theme.cta;
                     let ctaCss = [`color: ${tc.textColor} !important;`, `background-color: ${tc.bgColor} !important;`, `border-radius: ${tc.borderRadius}px !important;`, `font-weight: bold;`, `transition: all 0.3s;`, `display: inline-block;`, `text-decoration: none;`];
                     if (tc.fontFamily) ctaCss.push(`font-family: ${tc.fontFamily};`);
+                    if (tc.fontSize) ctaCss.push(`font-size: ${tc.fontSize}px !important;`);
                     finalCss += `.btn-theme { ${ctaCss.join(' ')} }\n`;
                     finalCss += `.btn-theme:hover { background-color: ${tc.bgHoverColor} !important; color: ${tc.textColor} !important; opacity: 0.9; }\n\n`;
                     
