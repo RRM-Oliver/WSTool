@@ -84,8 +84,8 @@
                         <button class="danger" @click="removeSection(sIdx)">Remove</button>
                     </div>
                     <div class="flex-row" style="margin-bottom: 10px; background: #f9fafb; padding: 10px; border-radius: 4px;">
-                        <div><label>Padding Top (px)</label><input type="number" v-model="sec.paddingTop"></div>
-                        <div><label>Padding Bottom (px)</label><input type="number" v-model="sec.paddingBottom"></div>
+                        <div><label>Pt <small>(y)</small></label><select v-model="sec.pt"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                        <div><label>Pb <small>(y)</small></label><select v-model="sec.pb"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
                         <div><label>Background Color</label><input type="color" v-model="sec.bgColor" style="height: 36px; padding: 0;"></div>
                     </div>
 
@@ -100,6 +100,13 @@
                             </div>
                             <div style="display: flex; gap: 10px; align-items: center;">
                                 <label style="font-size: 13px; cursor: pointer;"><input type="checkbox" v-model="row.centerAlign"> Center Content Align</label>
+                                <select v-if="row.columns.length === 2" v-model="row.layout" style="padding: 4px; font-size: 12px; height: 30px;">
+                                    <option value="50_50">50% + 50%</option>
+                                    <option value="40_60">40% + 60%</option>
+                                    <option value="30_70">30% + 70%</option>
+                                    <option value="25_75">25% + 75%</option>
+                                </select>
+                                <label v-if="row.columns.length === 2" style="font-size: 13px; cursor: pointer;"><input type="checkbox" v-model="row.reverse"> Reverse</label>
                                 <button class="outline" v-if="row.columns.length < 2" @click="addColumn(row)">+ Add Col</button>
                                 <button class="danger" @click="removeRow(sec, rIdx)">Del Row</button>
                             </div>
@@ -149,8 +156,16 @@
                                                 <div><label>Text Color</label><input type="color" v-model="el.color"></div>
                                             </div>
                                             <div class="flex-row form-group">
-                                                <div><label>Pad Top (px)</label><input type="number" v-model="el.paddingTop"></div>
-                                                <div><label>Pad Bot (px)</label><input type="number" v-model="el.paddingBottom"></div>
+                                                <div><label>Title Size Mobile (<767)</label><input type="number" v-model="el.fsMobile"></div>
+                                                <div><label>Title Size Tablet (768-991)</label><input type="number" v-model="el.fsTablet"></div>
+                                                <div><label>Title Size Desktop (>992)</label><input type="number" v-model="el.fsDesktop"></div>
+                                                <div><label>Font Family Override</label><input type="text" v-model="el.fontFamily" placeholder="e.g. 'Inter', sans-serif"></div>
+                                            </div>
+                                            <div class="flex-row form-group">
+                                                <div><label>Mt</label><select v-model="el.mt"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Mb</label><select v-model="el.mb"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Pt</label><select v-model="el.pt"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Pb</label><select v-model="el.pb"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
                                             </div>
                                         </div>
 
@@ -170,6 +185,12 @@
                                                 <label style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; text-transform: none; font-weight: normal; font-size: 13px; color: #4b5563;">
                                                     <input type="checkbox" v-model="el.isCenterAlign" style="width: auto;"> Center Align Text (default left)
                                                 </label>
+                                            </div>
+                                            <div class="flex-row form-group" style="margin-top: 8px;">
+                                                <div><label>Mt</label><select v-model="el.mt"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Mb</label><select v-model="el.mb"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Pt</label><select v-model="el.pt"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Pb</label><select v-model="el.pb"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
                                             </div>
                                         </div>
 
@@ -192,16 +213,16 @@
                                                 </select>
                                             </div>
                                             <div class="flex-row form-group">
-                                                <div><label>Margin Top</label><input type="number" v-model="el.marginTop"></div>
-                                                <div><label>Margin Bot</label><input type="number" v-model="el.marginBottom"></div>
-                                                <div><label>Margin Lft</label><input type="number" v-model="el.marginLeft"></div>
-                                                <div><label>Margin Rgt</label><input type="number" v-model="el.marginRight"></div>
+                                                <div><label>Mt</label><select v-model="el.mt"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Mb</label><select v-model="el.mb"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Ms (L)</label><select v-model="el.ms"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Me (R)</label><select v-model="el.me"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
                                             </div>
                                             <div class="flex-row form-group">
-                                                <div><label>Pad Top</label><input type="number" v-model="el.paddingTop"></div>
-                                                <div><label>Pad Bot</label><input type="number" v-model="el.paddingBottom"></div>
-                                                <div><label>Pad Lft</label><input type="number" v-model="el.paddingLeft"></div>
-                                                <div><label>Pad Rgt</label><input type="number" v-model="el.paddingRight"></div>
+                                                <div><label>Pt</label><select v-model="el.pt"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Pb</label><select v-model="el.pb"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Ps (L)</label><select v-model="el.ps"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Pe (R)</label><select v-model="el.pe"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
                                             </div>
                                         </div>
 
@@ -216,16 +237,16 @@
                                                 </select>
                                             </div>
                                             <div class="flex-row form-group">
-                                                <div><label>Margin Top</label><input type="number" v-model="el.marginTop"></div>
-                                                <div><label>Margin Bot</label><input type="number" v-model="el.marginBottom"></div>
-                                                <div><label>Margin Lft</label><input type="number" v-model="el.marginLeft"></div>
-                                                <div><label>Margin Rgt</label><input type="number" v-model="el.marginRight"></div>
+                                                <div><label>Mt</label><select v-model="el.mt"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Mb</label><select v-model="el.mb"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Ms (L)</label><select v-model="el.ms"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Me (R)</label><select v-model="el.me"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
                                             </div>
                                             <div class="flex-row form-group">
-                                                <div><label>Padding Top</label><input type="number" v-model="el.paddingTop"></div>
-                                                <div><label>Padding Bot</label><input type="number" v-model="el.paddingBottom"></div>
-                                                <div><label>Padding Lft</label><input type="number" v-model="el.paddingLeft"></div>
-                                                <div><label>Padding Rgt</label><input type="number" v-model="el.paddingRight"></div>
+                                                <div><label>Pt</label><select v-model="el.pt"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Pb</label><select v-model="el.pb"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Ps (L)</label><select v-model="el.ps"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
+                                                <div><label>Pe (R)</label><select v-model="el.pe"><option value="">Off</option><option v-for="n in spaces" :value="n">{{ n }}</option></select></div>
                                             </div>
                                             <div class="flex-row form-group">
                                                 <div><label>Text Color</label><input type="color" v-model="el.textColor"></div>
@@ -335,7 +356,8 @@
                 return {
                     sections: [],
                     customCss: '',
-                    customJs: ''
+                    customJs: '',
+                    spaces: ['0','1','2','3','4','5','auto']
                 }
             },
             mounted() {
@@ -344,7 +366,11 @@
                     try {
                         const data = JSON.parse(saved);
                         if (Array.isArray(data)) this.sections = data;
-                        else { this.sections = data.sections || []; this.customCss = data.customCss || ''; this.customJs = data.customJs || ''; }
+                        else { 
+                            this.sections = data.sections || []; 
+                            this.customCss = data.customCss || ''; 
+                            this.customJs = data.customJs || ''; 
+                        }
                     } catch (e) { console.error("Fail parse", e); }
                 }
             },
@@ -357,62 +383,229 @@
                 generatedHtml() {
                     if (this.sections.length === 0) return '<!-- Your generated HTML will appear here -->';
 
+                    const bsMap = {
+                        'container': '.container { width: 100%; padding-right: 15px; padding-left: 15px; margin-right: auto; margin-left: auto; }\n@media (min-width: 576px) { .container { max-width: 540px; } }\n@media (min-width: 768px) { .container { max-width: 720px; } }\n@media (min-width: 992px) { .container { max-width: 960px; } }\n@media (min-width: 1200px) { .container { max-width: 1140px; } }',
+                        'row': '.row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }',
+                        'col-12': '.col-12 { flex: 0 0 auto; width: 100%; padding-right: 15px; padding-left: 15px; }',
+                        'col-lg-3': '@media (min-width: 992px) { .col-lg-3 { flex: 0 0 auto; width: 25%; } }',
+                        'col-lg-4': '@media (min-width: 992px) { .col-lg-4 { flex: 0 0 auto; width: 33.33333333%; } }',
+                        'col-lg-5': '@media (min-width: 992px) { .col-lg-5 { flex: 0 0 auto; width: 41.66666667%; } }',
+                        'col-lg-6': '@media (min-width: 992px) { .col-lg-6 { flex: 0 0 auto; width: 50%; } }',
+                        'col-lg-7': '@media (min-width: 992px) { .col-lg-7 { flex: 0 0 auto; width: 58.33333333%; } }',
+                        'col-lg-8': '@media (min-width: 992px) { .col-lg-8 { flex: 0 0 auto; width: 66.66666667%; } }',
+                        'col-lg-9': '@media (min-width: 992px) { .col-lg-9 { flex: 0 0 auto; width: 75%; } }',
+                        'text-center': '.text-center { text-align: center !important; }',
+                        'text-end': '.text-end { text-align: right !important; }',
+                        'justify-content-center': '.justify-content-center { justify-content: center !important; }',
+                        'figure': '.figure { display: inline-block; }',
+                        'figure-img': '.figure-img { margin-bottom: 0.5rem; line-height: 1; }',
+                        'img-fluid': '.img-fluid { max-width: 100%; height: auto; }',
+                        'mx-auto': '.mx-auto { margin-right: auto !important; margin-left: auto !important; }',
+                        'd-block': '.d-block { display: block !important; }',
+                        'float-end': '.float-end { float: right !important; }',
+                        'clearfix': '.clearfix::after { display: block; clear: both; content: ""; }',
+                        'w-100': '.w-100 { width: 100% !important; }',
+                        'lead': '.lead { font-size: 1.25rem; font-weight: 300; }',
+                        'btn': '.btn { display: inline-block; font-weight: 400; line-height: 1.5; color: #212529; text-align: center; text-decoration: none; vertical-align: middle; cursor: pointer; user-select: none; background-color: transparent; border: 1px solid transparent; padding: 0.375rem 0.75rem; font-size: 1rem; border-radius: 0.25rem; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; }',
+                        'btn-primary': '.btn-primary { color: #fff; background-color: #0d6efd; border-color: #0d6efd; }\n.btn-primary:hover { color: #fff; background-color: #0b5ed7; border-color: #0a58ca; }'
+                    };
+
+                    // Procedurally add all Spacing Utilities to bsMap
+                    const spacingScale = { '0': '0', '1': '.25rem', '2': '.5rem', '3': '1rem', '4': '1.5rem', '5': '3rem', 'auto': 'auto' };
+                    const breakpoints = { '': '', 'sm': '576px', 'md': '768px', 'lg': '992px', 'xl': '1200px', 'xxl': '1400px' };
+                    
+                    ['m', 'p'].forEach(prop => {
+                        ['t', 'b', 's', 'e', 'x', 'y', ''].forEach(side => {
+                            Object.keys(spacingScale).forEach(size => {
+                                Object.keys(breakpoints).forEach(bp => {
+                                    const cls = `${prop}${side}${bp ? '-' + bp : ''}-${size}`;
+                                    const propName = prop === 'm' ? 'margin' : 'padding';
+                                    let sides = [];
+                                    if (side === 't') sides = ['-top'];
+                                    else if (side === 'b') sides = ['-bottom'];
+                                    else if (side === 's') sides = ['-left'];
+                                    else if (side === 'e') sides = ['-right'];
+                                    else if (side === 'x') sides = ['-left', '-right'];
+                                    else if (side === 'y') sides = ['-top', '-bottom'];
+                                    else sides = [''];
+
+                                    let rule = `.${cls} { `;
+                                    sides.forEach(s => { rule += `${propName}${s}: ${spacingScale[size]} !important; `; });
+                                    rule += `}`;
+
+                                    if (bp) {
+                                        rule = `@media (min-width: ${breakpoints[bp]}) { ${rule} }`;
+                                    }
+                                    
+                                    // Only m-* can have auto
+                                    if (size !== 'auto' || prop === 'm') {
+                                        bsMap[cls] = rule;
+                                    }
+                                });
+                            });
+                        });
+                    });
+
                     let finalHtml = '';
                     let cssRules = [];
                     let faqFound = false;
 
                     this.sections.forEach((sec, sIdx) => {
                         let secId = 'section-' + (sIdx + 1) + '-' + sec.id.substring(0,5);
-                        cssRules.push(`#${secId} { padding-top: ${sec.paddingTop || 0}px; padding-bottom: ${sec.paddingBottom || 0}px; background-color: ${sec.bgColor || '#ffffff'}; }`);
+                        let sCss = [];
+                        let sClasses = [];
                         
-                        finalHtml += `<section id="${secId}">\n`;
+                        if (sec.pt !== undefined && sec.pt !== '') sClasses.push(`pt-${sec.pt}`);
+                        if (sec.pb !== undefined && sec.pb !== '') sClasses.push(`pb-${sec.pb}`);
+                        if (sec.bgColor && sec.bgColor.toLowerCase() !== '#ffffff') sCss.push(`background-color: ${sec.bgColor};`);
+
+                        let secClassAttr = '';
+                        if (sCss.length > 0 || sClasses.length > 0) {
+                            if (sCss.length > 0) {
+                                let sClsName = `custom-sec-${sec.id.substring(0,5)}`;
+                                sClasses.push(sClsName);
+                                cssRules.push(`.${sClsName} { ${sCss.join(' ')} }`);
+                            }
+                            secClassAttr = ` class="${sClasses.join(' ')}"`;
+                        }
+                        
+                        finalHtml += `<section id="${secId}"${secClassAttr}>\n`;
                         finalHtml += `  <div class="container">\n`;
 
                         sec.rows.forEach(row => {
                             let isTwoCols = row.columns.length === 2;
-                            let rowAlign = row.centerAlign ? ' text-center justify-content-center' : '';
-                            finalHtml += `    <div class="row${rowAlign}">\n`;
+                            let rowAlignCls = [];
+                            if (row.centerAlign) {
+                                rowAlignCls.push('text-center');
+                                rowAlignCls.push('justify-content-center');
+                            }
+                            let rowClsStr = rowAlignCls.length > 0 ? ' ' + rowAlignCls.join(' ') : '';
+                            
+                            finalHtml += `    <div class="row${rowClsStr}">\n`;
 
-                            row.columns.forEach((col) => {
-                                finalHtml += isTwoCols ? `      <div class="col-lg-6">\n` : `      <div class="col-12">\n`;
+                            let layoutMap = { '50_50': ['col-lg-6', 'col-lg-6'], '40_60': ['col-lg-5', 'col-lg-7'], '30_70': ['col-lg-4', 'col-lg-8'], '25_75': ['col-lg-3', 'col-lg-9'] };
+                            let sizes = layoutMap[row.layout || '50_50'];
+                            if (row.reverse) sizes = [sizes[1], sizes[0]];
+
+                            row.columns.forEach((col, cIdx) => {
+                                let colCls = isTwoCols ? `col-12 ${sizes[cIdx]}` : "col-12";
+                                finalHtml += `      <div class="${colCls}">\n`;
 
                                 col.elements.forEach((el) => {
                                     let clsid = 'el-' + el.id;
                                     
                                     if (el.type === 'heading') {
-                                        cssRules.push(`.${clsid} { padding-top: ${el.paddingTop || 0}px; padding-bottom: ${el.paddingBottom || 0}px; color: ${el.color || '#000'}; text-align: ${el.align}; margin-top: 0; }`);
-                                        finalHtml += `        <${el.tag} class="${clsid}">${el.text || 'Heading text'}</${el.tag}>\n`;
+                                        let hClasses = [];
+                                        if (el.align === 'center') hClasses.push('text-center');
+                                        if (el.align === 'right') hClasses.push('text-end');
+                                        
+                                        if (el.mt !== undefined && el.mt !== '') hClasses.push(`mt-${el.mt}`);
+                                        if (el.mb !== undefined && el.mb !== '') hClasses.push(`mb-${el.mb}`);
+                                        if (el.pt !== undefined && el.pt !== '') hClasses.push(`pt-${el.pt}`);
+                                        if (el.pb !== undefined && el.pb !== '') hClasses.push(`pb-${el.pb}`);
+
+                                        let hCss = [];
+                                        if (el.color && el.color !== '#000000') hCss.push(`color: ${el.color};`);
+                                        if (el.fontFamily) hCss.push(`font-family: ${el.fontFamily};`);
+                                        
+                                        if (el.mt === undefined || el.mt === '') hCss.push(`margin-top: 0;`); 
+                                        
+                                        let hasCustomSize = (el.fsMobile && el.fsMobile != 24) || (el.fsTablet && el.fsTablet != 28) || (el.fsDesktop && el.fsDesktop != 32);
+                                        
+                                        if (hCss.length > 0 || hasCustomSize) {
+                                            hClasses.push(clsid);
+                                            if (hCss.length > 0) cssRules.push(`.${clsid} { ${hCss.join(' ')} }`);
+                                            if (el.fsMobile) cssRules.push(`.${clsid} { font-size: ${el.fsMobile}px; }`);
+                                            if (el.fsTablet) cssRules.push(`@media (min-width: 768px) { .${clsid} { font-size: ${el.fsTablet}px; } }`);
+                                            if (el.fsDesktop) cssRules.push(`@media (min-width: 992px) { .${clsid} { font-size: ${el.fsDesktop}px; } }`);
+                                        }
+                                        
+                                        let hClsStr = hClasses.length > 0 ? ` class="${hClasses.join(' ')}"` : '';
+                                        finalHtml += `        <${el.tag}${hClsStr}>${el.text || 'Heading text'}</${el.tag}>\n`;
                                     } 
                                     else if (el.type === 'p') {
-                                        let alignClass = el.isCenterAlign ? ' text-center' : '';
-                                        finalHtml += `        <div class="lead${alignClass}">\n          ${el.text || '<p>Paragraph text...</p>'}\n        </div>\n`;
+                                        let pClasses = ['lead'];
+                                        if (el.isCenterAlign) pClasses.push('text-center');
+                                        if (el.mt !== undefined && el.mt !== '') pClasses.push(`mt-${el.mt}`);
+                                        if (el.mb !== undefined && el.mb !== '') pClasses.push(`mb-${el.mb}`);
+                                        if (el.pt !== undefined && el.pt !== '') pClasses.push(`pt-${el.pt}`);
+                                        if (el.pb !== undefined && el.pb !== '') pClasses.push(`pb-${el.pb}`);
+
+                                        finalHtml += `        <div class="${pClasses.join(' ')}">\n          ${el.text || '<p>Paragraph text...</p>'}\n        </div>\n`;
                                     } 
                                     else if (el.type === 'img') {
-                                        cssRules.push(`.${clsid}-fig { margin: ${el.marginTop||0}px ${el.marginRight||0}px ${el.marginBottom||0}px ${el.marginLeft||0}px; padding: ${el.paddingTop||0}px ${el.paddingRight||0}px ${el.paddingBottom||0}px ${el.paddingLeft||0}px; text-align: ${el.align}; width: 100%; }`);
+                                        let iClasses = ['figure'];
+                                        if (el.align === 'center') iClasses.push('text-center');
+                                        if (el.align === 'right') iClasses.push('text-end');
+                                        
+                                        if (el.mt !== undefined && el.mt !== '') iClasses.push(`mt-${el.mt}`);
+                                        if (el.mb !== undefined && el.mb !== '') iClasses.push(`mb-${el.mb}`);
+                                        if (el.ms !== undefined && el.ms !== '') iClasses.push(`ms-${el.ms}`);
+                                        if (el.me !== undefined && el.me !== '') iClasses.push(`me-${el.me}`);
+                                        if (el.pt !== undefined && el.pt !== '') iClasses.push(`pt-${el.pt}`);
+                                        if (el.pb !== undefined && el.pb !== '') iClasses.push(`pb-${el.pb}`);
+                                        if (el.ps !== undefined && el.ps !== '') iClasses.push(`ps-${el.ps}`);
+                                        if (el.pe !== undefined && el.pe !== '') iClasses.push(`pe-${el.pe}`);
+                                        
+                                        if (iClasses.indexOf('pt-') === -1 && iClasses.indexOf('pb-') === -1 && iClasses.indexOf('mt-') === -1 && iClasses.indexOf('mb-') === -1) {
+                                            iClasses.push('w-100');
+                                        }
+                                        
                                         let imgAlignClass = el.align === 'center' ? ' mx-auto d-block' : el.align === 'right' ? ' float-end' : '';
-                                        finalHtml += `        <figure class="figure ${clsid}-fig">\n`;
+                                        finalHtml += `        <figure class="${iClasses.join(' ')}">\n`;
                                         finalHtml += `          <img class="figure-img img-fluid${imgAlignClass}" src="${el.src || '#'}" alt="${el.alt || 'Image'}" loading="lazy">\n`;
                                         finalHtml += `        </figure>\n`;
-                                        if (el.align === 'right') finalHtml += `        <div style="clear: both;"></div>\n`;
+                                        if (el.align === 'right') finalHtml += `        <div class="clearfix"></div>\n`;
                                     } 
                                     else if (el.type === 'cta') {
-                                        cssRules.push(`.${clsid} { margin: ${el.marginTop||0}px ${el.marginRight||0}px ${el.marginBottom||0}px ${el.marginLeft||0}px; display: flex; flex-wrap: wrap; gap: 40px; justify-content: ${el.align==='center'?'center':el.align==='right'?'flex-end':'flex-start'}; }`);
-                                        cssRules.push(`.${clsid}-btn { padding: ${el.paddingTop||0}px ${el.paddingRight||0}px ${el.paddingBottom||0}px ${el.paddingLeft||0}px; color: ${el.textColor||'#fff'}; background-color: ${el.bgColor||'#0d6efd'}; text-decoration: none; border-radius: 6px; font-weight: bold; transition: all 0.3s; display: inline-block; }`);
-                                        cssRules.push(`.${clsid}-btn:hover { background-color: ${el.bgHoverColor||'#0b5ed7'}; color: ${el.textColor||'#fff'}; }`);
+                                        let cClasses = [clsid];
+                                        if (el.mt !== undefined && el.mt !== '') cClasses.push(`mt-${el.mt}`);
+                                        if (el.mb !== undefined && el.mb !== '') cClasses.push(`mb-${el.mb}`);
+                                        if (el.ms !== undefined && el.ms !== '') cClasses.push(`ms-${el.ms}`);
+                                        if (el.me !== undefined && el.me !== '') cClasses.push(`me-${el.me}`);
                                         
-                                        finalHtml += `        <div class="cta-group ${clsid}">\n`;
+                                        let jContent = el.align === 'center' ? 'center' : el.align === 'right' ? 'flex-end' : 'flex-start';
+                                        
+                                        let btnCss = [];
+                                        let btnClasses = [];
+                                        if (el.pt !== undefined && el.pt !== '') btnClasses.push(`pt-${el.pt}`);
+                                        if (el.pb !== undefined && el.pb !== '') btnClasses.push(`pb-${el.pb}`);
+                                        if (el.ps !== undefined && el.ps !== '') btnClasses.push(`ps-${el.ps}`);
+                                        if (el.pe !== undefined && el.pe !== '') btnClasses.push(`pe-${el.pe}`);
+                                        
+                                        if (el.textColor && el.textColor.toLowerCase() !== '#ffffff') btnCss.push(`color: ${el.textColor};`);
+                                        if (el.bgColor && el.bgColor.toLowerCase() !== '#0d6efd') btnCss.push(`background-color: ${el.bgColor};`);
+
+                                        let defaultBtn = (el.textColor.toLowerCase() === '#ffffff' && el.bgColor.toLowerCase() === '#0d6efd' && btnCss.length === 0);
+                                        
+                                        cssRules.push(`.${clsid} { display: flex; flex-wrap: wrap; gap: 40px; justify-content: ${jContent}; }`);
+                                        
+                                        let finalBtnClasses = defaultBtn ? 'btn btn-primary' : `${clsid}-btn btn`;
+                                        if (btnClasses.length > 0) finalBtnClasses += ' ' + btnClasses.join(' ');
+                                        if (!defaultBtn) {
+                                            cssRules.push(`.${clsid}-btn { ${btnCss.join(' ')} text-decoration: none; border-radius: 6px; font-weight: bold; transition: all 0.3s; display: inline-block; }`);
+                                            cssRules.push(`.${clsid}-btn:hover { background-color: ${el.bgHoverColor||'#0b5ed7'}; color: ${el.textColor||'#fff'}; }`);
+                                        }
+                                        
+                                        finalHtml += `        <div class="cta-group ${cClasses.join(' ')}">\n`;
                                         el.buttons.forEach(b => {
                                             if (b.text && b.href) {
-                                                finalHtml += `          <a href="${b.href}" class="${clsid}-btn btn">${b.text}</a>\n`;
+                                                finalHtml += `          <a href="${b.href}" class="${finalBtnClasses}">${b.text}</a>\n`;
                                             }
                                         });
                                         finalHtml += `        </div>\n`;
                                     } 
                                     else if (el.type === 'faq') {
                                         faqFound = true;
-                                        cssRules.push(`.${clsid}-summary h3 { font-size: ${el.fsMobile||18}px; margin: 0; }`);
-                                        cssRules.push(`@media (min-width: 768px) { .${clsid}-summary h3 { font-size: ${el.fsTablet||20}px; } }`);
-                                        cssRules.push(`@media (min-width: 992px) { .${clsid}-summary h3 { font-size: ${el.fsDesktop||24}px; } }`);
+                                        
+                                        if (el.fsMobile && el.fsMobile != 18) cssRules.push(`.${clsid}-summary h3 { font-size: ${el.fsMobile}px; margin: 0; }`);
+                                        else cssRules.push(`.${clsid}-summary h3 { font-size: 18px; margin: 0; }`);
+                                        
+                                        if (el.fsTablet && el.fsTablet != 20) cssRules.push(`@media (min-width: 768px) { .${clsid}-summary h3 { font-size: ${el.fsTablet}px; } }`);
+                                        else cssRules.push(`@media (min-width: 768px) { .${clsid}-summary h3 { font-size: 20px; } }`);
+                                        
+                                        if (el.fsDesktop && el.fsDesktop != 24) cssRules.push(`@media (min-width: 992px) { .${clsid}-summary h3 { font-size: ${el.fsDesktop}px; } }`);
+                                        else cssRules.push(`@media (min-width: 992px) { .${clsid}-summary h3 { font-size: 24px; } }`);
                                         
                                         finalHtml += `        <div class="faq-container my-4">\n`;
                                         el.faqs.forEach((faq) => {
@@ -442,6 +635,18 @@
                     // Build Output CSS Block
                     let finalCss = "<style>\n";
                     
+                    let usedBs = [];
+                    Object.keys(bsMap).forEach(cls => {
+                        let regex = new RegExp('class="[^"]*\\b' + cls + '\\b[^"]*"');
+                        if (regex.test(finalHtml)) {
+                            usedBs.push(bsMap[cls]);
+                        }
+                    });
+                    
+                    if (usedBs.length > 0) {
+                        finalCss += "/* Auto-Generated Library Styles */\n" + usedBs.join("\n") + "\n\n";
+                    }
+
                     if (faqFound) {
                         finalCss += `/* FAQ Component Styles */\n.faq-details { border: none; margin-bottom: 1.5rem; }\n.faq-summary { background: #fff; padding: 1.25rem 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); font-weight: 700; cursor: pointer; list-style: none; transition: all 0.2s ease; position: relative; }\n.faq-summary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); }\n.faq-details[open] .faq-summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }\n.faq-content { background: #fff; padding: 1rem 1.5rem 1.5rem; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; box-shadow: 0 10px 12px -5px rgba(0,0,0,0.05); }\n\n`;
                     }
@@ -464,9 +669,9 @@
             methods: {
                 addSection() {
                     const idstr = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-                    this.sections.push({ id: idstr, bg: '#ffffff', paddingTop: 60, paddingBottom: 60, rows: [ { id: Date.now() + 1, columns: [], centerAlign: false } ] });
+                    this.sections.push({ id: idstr, bg: '#ffffff', pt: '5', pb: '5', rows: [ { id: Date.now() + 1, columns: [], centerAlign: false, layout: '50_50', reverse: false } ] });
                 },
-                addRow(section) { section.rows.push({ id: Date.now(), columns: [], centerAlign: false }); },
+                addRow(section) { section.rows.push({ id: Date.now(), columns: [], centerAlign: false, layout: '50_50', reverse: false }); },
                 addColumn(row) {
                     if (row.columns.length < 2) row.columns.push({ id: Date.now(), elements: [], selectedType: 'heading' });
                     else alert("Maximum 2 columns");
@@ -475,10 +680,10 @@
                     if (!type) type = 'heading';
                     const el = { id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), type };
 
-                    if (type === 'heading') { el.text = ''; el.tag = 'h2'; el.paddingTop = 0; el.paddingBottom = 0; el.align = 'center'; el.color = '#000000'; }
-                    if (type === 'p') { el.text = ''; el.showRawHtml = false; el.isCenterAlign = false; }
-                    if (type === 'img') { el.src = ''; el.alt = ''; el.align = 'center'; el.marginTop = 0; el.marginBottom = 0; el.marginLeft = 0; el.marginRight = 0; el.paddingTop = 0; el.paddingBottom = 0; el.paddingLeft = 0; el.paddingRight = 0; }
-                    if (type === 'cta') { el.buttons = [{text: 'Click Here', href: '#'}]; el.align = 'center'; el.marginTop = 0; el.marginBottom = 0; el.marginLeft = 0; el.marginRight = 0; el.paddingTop = 10; el.paddingBottom = 10; el.paddingLeft = 20; el.paddingRight = 20; el.textColor = '#ffffff'; el.bgColor = '#0d6efd'; el.bgHoverColor = '#0b5ed7'; }
+                    if (type === 'heading') { el.text = ''; el.tag = 'h2'; el.pt = ''; el.pb = ''; el.mt = ''; el.mb = ''; el.align = 'center'; el.color = '#000000'; el.fontFamily = ''; el.fsMobile = 24; el.fsTablet = 28; el.fsDesktop = 32; }
+                    if (type === 'p') { el.text = ''; el.showRawHtml = false; el.isCenterAlign = false; el.pt = ''; el.pb = ''; el.mt = ''; el.mb = ''; }
+                    if (type === 'img') { el.src = ''; el.alt = ''; el.align = 'center'; el.pt = ''; el.pb = ''; el.ps = ''; el.pe = ''; el.mt = ''; el.mb = ''; el.ms = ''; el.me = ''; }
+                    if (type === 'cta') { el.buttons = [{text: 'Click Here', href: '#'}]; el.align = 'center'; el.pt = ''; el.pb = ''; el.ps = ''; el.pe = ''; el.mt = ''; el.mb = ''; el.ms = ''; el.me = ''; el.textColor = '#ffffff'; el.bgColor = '#0d6efd'; el.bgHoverColor = '#0b5ed7'; }
                     if (type === 'faq') { el.fsMobile = 18; el.fsTablet = 20; el.fsDesktop = 24; el.faqs = [ { q: '', a: '', showRawHtml: false }, { q: '', a: '', showRawHtml: false }, { q: '', a: '', showRawHtml: false } ]; }
 
                     column.elements.push(el);
