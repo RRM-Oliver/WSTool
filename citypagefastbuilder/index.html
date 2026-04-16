@@ -88,6 +88,7 @@
                         <button class="outline" style="padding: 3px 8px; font-size: 11px;" @click="insertShortcode('row')">Text</button>
                         <button class="outline" style="padding: 3px 8px; font-size: 11px;" @click="insertShortcode('split')">[split row]</button>
                         <button class="outline" style="padding: 3px 8px; font-size: 11px;" @click="insertShortcode('btn')">[button]</button>
+                        <button class="outline" style="padding: 3px 8px; font-size: 11px;" @click="insertShortcode('spacer')">[spacer]</button>
                         <button class="outline" style="padding: 3px 8px; font-size: 11px;" @click="insertShortcode('infographic')">[infographic]</button>
                         <button class="outline" style="padding: 3px 8px; font-size: 11px;" @click="insertShortcode('faq')">[faq]</button>
                     </div>
@@ -233,6 +234,14 @@
                             </div>
                         </div>
 
+                        <!-- Spacer -->
+                        <div v-else-if="el.type === 'spacer'">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label>Height (px)</label>
+                                <input type="number" v-model.number="el.height" step="5" min="5" placeholder="20">
+                            </div>
+                        </div>
+
                         <!-- FAQ -->
                         <div v-else-if="el.type === 'faq'">
                             <div v-for="(f, i) in el.items" :key="i" style="background:#fff; border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:4px;">
@@ -257,6 +266,7 @@
                             <option value="p">Paragraph / Rich Text</option>
                             <option value="img">Image</option>
                             <option value="btn">Button</option>
+                            <option value="spacer">Spacer</option>
                             <option value="faq">FAQ (3 Items)</option>
                         </select>
                         <button @click="addElement(row)">+ Add</button>
@@ -546,6 +556,7 @@ const app = Vue.createApp({
             if (tag === 'row') str = '<p>Content goes here</p>';
             if (tag === 'split') str = '<p>[row_image]<br>[img src="url" alt=""]<br>[/row_image]</p><p>[row_text]<br>Content goes here<br>[/row_text]</p>';
             if (tag === 'btn') str = '<p>[button url="#" label="Click Here"]</p>';
+            if (tag === 'spacer') str = '<p>[spacer=20]</p>';
             if (tag === 'faq') str = '<p>[faq q="Question"]<br>Answer<br>[/faq]</p>';
             if (tag === 'infographic') str = '<p>[infographic src="url" alt=""]</p>';
             
@@ -575,7 +586,7 @@ const app = Vue.createApp({
                 
                 const parseInlineElements = (text) => {
                     const els = [];
-                    const inlineRegex = /\[(button|img)\s+([^\]]+)\]/gi;
+                    const inlineRegex = /\[(button|img|spacer)(?:[\s=]+([^\]]+))?\]/gi;
                     let lastIdx = 0;
                     let inlineMatch;
                     
@@ -587,7 +598,7 @@ const app = Vue.createApp({
                         }
                         
                         const tag = inlineMatch[1].toLowerCase();
-                        const attrsRaw = inlineMatch[2];
+                        const attrsRaw = inlineMatch[2] || '';
                         const getAttr = (name) => {
                             const m = new RegExp(name + `=(['"])(.*?)\\1`, 'i').exec(attrsRaw);
                             return m ? m[2] : '';
@@ -597,6 +608,9 @@ const app = Vue.createApp({
                             els.push({ type: 'btn', url: getAttr('url') || '#', label: getAttr('label') || 'Button' });
                         } else if (tag === 'img') {
                             els.push({ type: 'img', src: getAttr('src'), alt: getAttr('alt') });
+                        } else if (tag === 'spacer') {
+                            let h = parseInt(attrsRaw);
+                            els.push({ type: 'spacer', height: isNaN(h) ? 20 : h });
                         }
                         
                         lastIdx = inlineRegex.lastIndex;
@@ -755,6 +769,7 @@ const app = Vue.createApp({
             if(el.type === 'h2') return `  <h2>${el.text || ''}</h2>\n`;
             if(el.type === 'h3') return `  <h3>${el.text || ''}</h3>\n`;
             if(el.type === 'p') return `  ${el.text || ''}\n`;
+            if(el.type === 'spacer') return `  <div style="height: ${el.height || 20}px;"></div>\n`;
             if(el.type === 'img') return `  <img src="${el.src || ''}" alt="${el.alt || ''}">\n`;
             if(el.type === 'btn') return `  <a href="${el.url || '#'}" class="cta-btn">${el.label || 'Click Here'}</a>\n`;
             if(el.type === 'faq') {
