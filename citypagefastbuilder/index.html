@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fast HTML Layout Generator</title>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Quill library for Rich Text Editing -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 20px; background: #f3f4f6; color: #1f2937;
+        }
+        .container { display: flex; gap: 20px; max-width: 1600px; margin: 0 auto; height: calc(100vh - 40px); }
+        .builder { flex: 1; overflow-y: auto; padding-right: 15px; }
+        .output { flex: 1; display: flex; flex-direction: column; overflow: auto; }
+        
+        /* UI Components */
+        .section { background: white; border-radius: 8px; padding: 20px; border: 1px solid #e5e7eb; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .row-ct { background: #f9fafb; border: 1px solid #d1d5db; border-radius: 6px; padding: 15px; margin-top: 15px; }
+        .element { background: #f3f4f6; padding: 15px; border-radius: 6px; margin-top: 10px; border: 1px solid #e5e7eb; position: relative; }
+        .element-header { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center; }
+        
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #4b5563; text-transform: uppercase; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 4px; font-family: inherit; font-size: 14px; }
+        
+        button { background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        button:hover { background: #2563eb; }
+        button.danger { background: #ef4444; }
+        button.danger:hover { background: #dc2626; }
+        button.outline { background: transparent; border: 1px solid #e5e7eb; color: #374151; }
+        button.outline:hover { background: #f3f4f6; }
+        
+        .type-badge { background: #e0e7ff; color: #4338ca; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .header-actions { display: flex; justify-content: space-between; align-items: center; }
+        
+        .output textarea { height: calc(100vh - 120px); min-height: 400px; font-family: Consolas, monospace; padding: 15px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; line-height: 1.5; white-space: pre; background: #ffffff; resize: vertical; margin-top:10px; }
+        
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div class="container">
+        <!-- Builder Column -->
+        <div class="builder">
+            <div class="header-actions" style="margin-bottom: 20px;">
+                <h2>City Page Fast Builder</h2>
+                <div style="display: flex; gap: 10px;">
+                    <button class="outline" @click="addStandardSection">+ Standard Section</button>
+                    <button class="outline" @click="addFaqSection">+ FAQ Section</button>
+                    <button class="outline" @click="addInfographicSection">+ Infographic Section</button>
+                    <button class="outline" @click="addLastSection">+ Last Section</button>
+                    <button class="outline" @click="showImportModal = true">Import HTML</button>
+                    <button class="outline" @click="showShortcodeModal = true">Import Shortcode</button>
+                    <button class="outline" @click="expandAll" v-if="sections.length">Expand All</button>
+                    <button class="outline" @click="collapseAll" v-if="sections.length">Collapse All</button>
+                    <button class="danger" @click="sections = []" v-if="sections.length">Clear</button>
+                </div>
+            </div>
+
+            <!-- Import Modal -->
+            <div v-if="showImportModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+                <div style="background: white; padding: 20px; border-radius: 8px; width: 800px; max-width: 90vw; height: 600px; display: flex; flex-direction: column;">
+                    <h3 style="margin-top: 0;">Import Generated HTML</h3>
+                    <p style="font-size: 14px; color: #6b7280;">Paste the HTML block generated by this tool to restore your sections.</p>
+                    <textarea v-model="importHtmlStr" style="flex: 1; margin-bottom: 15px; font-family: monospace; resize: none; padding: 10px;"></textarea>
+                    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                        <button class="outline" @click="showImportModal = false">Cancel</button>
+                        <button @click="processImport">Import</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shortcode Modal -->
+            <div v-if="showShortcodeModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+                <div style="background: white; padding: 20px; border-radius: 8px; width: 800px; max-width: 90vw; height: 600px; display: flex; flex-direction: column;">
+                    <p style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">Paste your pseudo-bbcode tags (e.g. [section], [row_image]) below. Rich text formatting like bold and lists will be preserved!</p>
+                    <div style="display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap;">
+                        <span style="font-size: 12px; font-weight: bold; color: #4b5563; align-self: center; margin-right: 5px;">Insert:</span>
+                        <button class="outline" style="padding: 3px 8px; font-size: 11px;" @click="insertShortcode('sec')">[section]</button>
+                        <button class="outline" style="padding: 3px 8px; font-size: 11px;" @click="insertShortcode('row')">Text</button>
+                        <button class="outline" style="padding: 3px 8px; font-size: 11px;" @click="insertShortcode('split')">[split row]</button>
+                        <button class="outline" style="padding: 3px 8px; font-size: 11px;" @click="insertShortcode('btn')">[button]</button>
+                        <button class="outline" style="padding: 3px 8px; font-size: 11px;" @click="insertShortcode('infographic')">[infographic]</button>
+                        <button class="outline" style="padding: 3px 8px; font-size: 11px;" @click="insertShortcode('faq')">[faq]</button>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; margin-bottom: 15px; border: 1px solid #d1d5db; border-radius: 4px; background: white;">
+                        <rich-text-editor v-model="importShortcodeStr"></rich-text-editor>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                        <button class="outline" @click="showShortcodeModal = false">Cancel</button>
+                        <button @click="processShortcode">Generate</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Settings -->
+            <div class="section" style="border-left: 4px solid #8b5cf6;">
+                <div class="header-actions" style="margin-bottom: 15px;">
+                    <h3 style="margin: 0;">Global Styles & Settings</h3>
+                    <button class="outline" style="padding: 4px 8px; font-size: 12px;" @click="globalSettingsCollapsed = !globalSettingsCollapsed">
+                        {{ globalSettingsCollapsed ? 'Expand' : 'Collapse' }}
+                    </button>
+                </div>
+                <div v-show="!globalSettingsCollapsed">
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label>Heading Font Family</label>
+                        <input type="text" v-model="settings.headingFont" placeholder="e.g. 'Inter', sans-serif">
+                    </div>
+                </div>
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label>Button Text Color</label>
+                        <input type="color" v-model="settings.btnText">
+                    </div>
+                    <div class="form-group">
+                        <label>Button Background Color</label>
+                        <input type="color" v-model="settings.btnBg">
+                    </div>
+                    <div class="form-group">
+                        <label>Button Hover Text Color</label>
+                        <input type="color" v-model="settings.btnHoverText">
+                    </div>
+                    <div class="form-group">
+                        <label>Button Hover Background</label>
+                        <input type="color" v-model="settings.btnHoverBg">
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            <div v-if="sections.length === 0" style="text-align: center; padding: 40px; color: #6b7280; border: 2px dashed #d1d5db; border-radius: 8px;">
+                Use the buttons above to add a section and start building!
+            </div>
+
+            <!-- Sections Loop -->
+            <div v-for="(sec, sIdx) in sections" :key="sec.id" class="section">
+                <div class="header-actions">
+                    <h3 style="margin: 0;">Section {{ sIdx + 1 }}</h3>
+                    <div style="display: flex; gap: 5px; align-items: center;">
+                        <button class="outline" style="padding: 4px 8px; font-size: 12px;" @click="sec.collapsed = !sec.collapsed">
+                            {{ sec.collapsed ? 'Expand' : 'Collapse' }}
+                        </button>
+                        <button class="outline" @click="moveSection(sIdx, -1)" :disabled="sIdx===0">↑</button>
+                        <button class="outline" @click="moveSection(sIdx, 1)" :disabled="sIdx===sections.length-1">↓</button>
+                        <button class="danger" @click="sections.splice(sIdx, 1)">Remove</button>
+                    </div>
+                </div>
+                
+                <div v-show="!sec.collapsed">
+                <button class="outline" @click="addRow(sec)" style="margin-top: 10px; width: 100%;">+ Add Row</button>
+
+                <!-- Rows Loop -->
+                <div v-for="(row, rIdx) in sec.rows" :key="row.id" class="row-ct">
+                    <div class="header-actions" style="margin-bottom: 15px;">
+                        <span style="font-weight: 600;">Row {{ rIdx + 1 }}</span>
+                        <div style="display: flex; gap: 5px; align-items:center;">
+                            <button class="outline" @click="moveRow(sec, rIdx, -1)" :disabled="rIdx===0" style="padding: 2px 6px; font-size: 11px;">↑</button>
+                            <button class="outline" @click="moveRow(sec, rIdx, 1)" :disabled="rIdx===sec.rows.length-1" style="padding: 2px 6px; font-size: 11px;">↓</button>
+                            
+                            <span v-if="hasImage(row)" class="type-badge" style="background:#dcfce7; color:#166534; margin-left: 10px;">{{ row.imgFullRow ? 'Full Row Layout' : 'Auto 2-Column Layout' }}</span>
+                            <template v-if="hasImage(row)">
+                                <label style="margin-left:10px; font-size:12px; display:inline-flex; align-items:center;">
+                                    <input type="checkbox" v-model="row.imgFullRow" style="margin-right:5px;"> Full Row Image
+                                </label>
+                                <template v-if="!row.imgFullRow">
+                                    <select v-model="row.imgPosition" style="width: auto; padding: 4px; font-size: 12px; margin-left:5px;">
+                                        <option value="left">Image Left</option>
+                                        <option value="right">Image Right</option>
+                                    </select>
+                                    <select v-model="row.imgWidth" style="width: auto; padding: 4px; font-size: 12px; margin-left:5px;">
+                                        <option value="50%">50% Width</option>
+                                        <option value="40%">40% Width</option>
+                                        <option value="30%">30% Width</option>
+                                        <option value="25%">25% Width</option>
+                                    </select>
+                                </template>
+                            </template>
+                            <button class="danger" @click="sec.rows.splice(rIdx, 1)" style="padding: 4px 8px; font-size:12px; margin-left:10px;">Delete Row</button>
+                        </div>
+                    </div>
+
+                    <!-- Elements Loop -->
+                    <div v-for="(el, eIdx) in row.elements" :key="el.id" class="element">
+                        <div class="element-header">
+                            <span class="type-badge">{{ el.type.toUpperCase() }}</span>
+                            <div style="display: flex; gap: 5px;">
+                                <button class="outline" style="padding: 2px 6px; font-size: 11px;" @click="moveElement(row, eIdx, -1)" :disabled="eIdx===0">↑</button>
+                                <button class="outline" style="padding: 2px 6px; font-size: 11px;" @click="moveElement(row, eIdx, 1)" :disabled="eIdx===row.elements.length-1">↓</button>
+                                <button class="danger" style="padding: 2px 6px; font-size: 11px;" @click="row.elements.splice(eIdx, 1)">X</button>
+                            </div>
+                        </div>
+
+                        <!-- H1, H2, H3 inputs -->
+                        <div v-if="['h1', 'h2', 'h3'].includes(el.type)" class="form-group">
+                            <input type="text" v-model="el.text" :placeholder="'Enter ' + el.type + ' text...'">
+                        </div>
+
+                        <!-- Paragraph (Rich Text) -->
+                        <div v-else-if="el.type === 'p'" class="form-group" style="background:white;">
+                            <rich-text-editor v-model="el.text"></rich-text-editor>
+                        </div>
+
+                        <!-- Image -->
+                        <div v-else-if="el.type === 'img'">
+                            <div class="form-group">
+                                <label>Image Source (URL)</label>
+                                <input type="text" v-model="el.src" placeholder="https://...">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label>Alt Text</label>
+                                <input type="text" v-model="el.alt" placeholder="Image description">
+                            </div>
+                        </div>
+
+                        <!-- Button -->
+                        <div v-else-if="el.type === 'btn'">
+                            <div class="form-group">
+                                <label>Button Label</label>
+                                <input type="text" v-model="el.label" placeholder="Click Here">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label>Button URL/Link</label>
+                                <input type="text" v-model="el.url" placeholder="/contact-us">
+                            </div>
+                        </div>
+
+                        <!-- FAQ -->
+                        <div v-else-if="el.type === 'faq'">
+                            <div v-for="(f, i) in el.items" :key="i" style="background:#fff; border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:4px;">
+                                <div class="form-group">
+                                    <label>Question {{i+1}}</label>
+                                    <input type="text" v-model="f.q" placeholder="Question?">
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label>Answer {{i+1}}</label>
+                                    <textarea v-model="f.a" placeholder="Answer text..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Element -->
+                    <div style="display:flex; gap:10px; margin-top:20px;">
+                        <select v-model="row.newTypeSelected" style="width:200px;">
+                            <option value="h1">Heading 1</option>
+                            <option value="h2">Heading 2</option>
+                            <option value="h3">Heading 3</option>
+                            <option value="p">Paragraph / Rich Text</option>
+                            <option value="img">Image</option>
+                            <option value="btn">Button</option>
+                            <option value="faq">FAQ (3 Items)</option>
+                        </select>
+                        <button @click="addElement(row)">+ Add</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Output Column -->
+        <div class="output">
+            <div class="header-actions">
+                <h2>Generated HTML/CSS</h2>
+                <button @click="copyOutput" class="outline">Copy to Clipboard</button>
+            </div>
+            <textarea readonly :value="generatedCode"></textarea>
+        </div>
+    </div>
+</div>
+
+<script>
+const RichTextEditor = {
+    props: ['modelValue'],
+    data() { return { showHtml: false, htmlContent: '' }; },
+    template: `
+        <div style="position: relative;">
+            <button class="outline" style="position: absolute; top: 8px; right: 8px; padding: 2px 6px; font-size: 11px; z-index: 100; background: white;" @click.prevent="toggleHtml">
+                {{ showHtml ? 'WYSIWYG' : 'HTML' }}
+            </button>
+            <div v-show="!showHtml">
+                <div ref="editor"></div>
+            </div>
+            <textarea v-show="showHtml" v-model="htmlContent" @input="updateFromHtml" style="width: 100%; min-height: 150px; font-family: monospace; font-size: 13px; padding: 30px 10px 10px 10px; border: 1px solid #ccc; border-radius: 4px; resize: vertical; margin-bottom: 0; outline: none;"></textarea>
+        </div>
+    `,
+    mounted() {
+        this.htmlContent = this.modelValue || '';
+        this.quill = new Quill(this.$refs.editor, {
+            theme: 'snow',
+            modules: { toolbar: [ ['bold', 'italic', 'underline'], [{'list':'bullet'}], ['link','clean'] ] }
+        });
+        if(this.modelValue) this.quill.root.innerHTML = this.modelValue;
+        this.quill.on('text-change', () => { 
+            if(!this.showHtml) {
+                this.htmlContent = this.quill.root.innerHTML;
+                this.$emit('update:modelValue', this.htmlContent);
+            }
+        });
+    },
+    watch: {
+        modelValue(val) { 
+            if(val !== this.htmlContent) {
+                this.htmlContent = val || '';
+                if(this.quill && val !== this.quill.root.innerHTML) this.quill.root.innerHTML = this.htmlContent;
+            }
+        }
+    },
+    methods: {
+        toggleHtml() {
+            this.showHtml = !this.showHtml;
+            if(!this.showHtml) {
+                this.quill.root.innerHTML = this.htmlContent;
+                this.$emit('update:modelValue', this.htmlContent);
+            }
+        },
+        updateFromHtml() {
+            this.$emit('update:modelValue', this.htmlContent);
+        }
+    }
+};
+
+const app = Vue.createApp({
+    components: { 'rich-text-editor': RichTextEditor },
+    data() {
+        return {
+            showImportModal: false,
+            importHtmlStr: '',
+            showShortcodeModal: false,
+            importShortcodeStr: '',
+            globalSettingsCollapsed: false,
+            settings: {
+                headingFont: "'Inter', sans-serif",
+                btnText: '#ffffff',
+                btnBg: '#0056b3',
+                btnHoverText: '#ffffff',
+                btnHoverBg: '#004494'
+            },
+            sections: []
+        };
+    },
+    mounted() {
+        const saved = localStorage.getItem('fastBuilderData');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                if (data.sections) this.sections = data.sections;
+                if (data.settings) Object.assign(this.settings, data.settings);
+                if (data.importShortcodeStr) this.importShortcodeStr = data.importShortcodeStr;
+            } catch(e) { console.error('Error loading data', e); }
+        }
+    },
+    watch: {
+        sections: { deep: true, handler() { this.saveData(); } },
+        settings: { deep: true, handler() { this.saveData(); } },
+        importShortcodeStr: { handler() { this.saveData(); } }
+    },
+    methods: {
+        expandAll() {
+            this.sections.forEach(s => s.collapsed = false);
+        },
+        collapseAll() {
+            this.sections.forEach(s => s.collapsed = true);
+        },
+        saveData() {
+            localStorage.setItem('fastBuilderData', JSON.stringify({ sections: this.sections, settings: this.settings, importShortcodeStr: this.importShortcodeStr }));
+        },
+        addStandardSection() {
+            let elements = [
+                { id: Date.now()+1, type: this.sections.length === 0 ? 'h1' : 'h2', text: 'Section Heading' },
+                { id: Date.now()+2, type: 'p', text: '<p>Section content goes here.</p>' }
+            ];
+            this.sections.push({ id: Date.now(), collapsed: false, rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
+        },
+        addFaqSection() {
+            let elements = [
+                { id: Date.now()+1, type: 'h2', text: 'Frequently Asked Questions' },
+                { id: Date.now()+2, type: 'faq', items: [{q:'',a:''},{q:'',a:''},{q:'',a:''}] }
+            ];
+            this.sections.push({ id: Date.now(), collapsed: false, rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
+        },
+        addInfographicSection() {
+            let elements = [
+                { id: Date.now()+1, type: 'img', src: '', alt: 'Infographic' },
+                { id: Date.now()+2, type: 'p', text: '<p>Optional description goes here.</p>' },
+                { id: Date.now()+3, type: 'btn', label: 'Optional Button', url: '#' }
+            ];
+            this.sections.push({ id: Date.now(), collapsed: false, rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: true }] });
+        },
+        addLastSection() {
+            let elements = [
+                { id: Date.now()+1, type: 'h2', text: 'Ready to get started?' },
+                { id: Date.now()+2, type: 'p', text: '<p>Contact us today for a free consultation.</p>' },
+                { id: Date.now()+3, type: 'btn', label: 'Call Now', url: '#' }
+            ];
+            this.sections.push({ id: Date.now(), collapsed: false, rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
+        },
+        addRow(sec) {
+            sec.rows.push({ id: Date.now(), elements: [], newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false });
+        },
+        addElement(row) {
+            if(!row.newTypeSelected) return;
+            const el = { id: Date.now(), type: row.newTypeSelected };
+            if(el.type === 'faq') el.items = [{q:'',a:''},{q:'',a:''},{q:'',a:''}];
+            if(el.type === 'btn') { el.label = 'Click Here'; el.url = '#'; }
+            row.elements.push(el);
+        },
+        hasImage(row) {
+            return row.elements.some(e => e.type === 'img');
+        },
+        moveSection(idx, dir) {
+            const temp = this.sections[idx];
+            this.sections[idx] = this.sections[idx + dir];
+            this.sections[idx + dir] = temp;
+        },
+        moveRow(sec, idx, dir) {
+            const temp = sec.rows[idx];
+            sec.rows[idx] = sec.rows[idx + dir];
+            sec.rows[idx + dir] = temp;
+        },
+        moveElement(row, idx, dir) {
+            const temp = row.elements[idx];
+            row.elements[idx] = row.elements[idx + dir];
+            row.elements[idx + dir] = temp;
+        },
+        copyOutput() {
+            navigator.clipboard.writeText(this.generatedCode);
+            alert("Copied to clipboard!");
+        },
+        processImport() {
+            if (!this.importHtmlStr) return;
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(this.importHtmlStr, 'text/html');
+            
+            // Try parse settings
+            const style = doc.querySelector('style');
+            if (style) {
+                const text = style.textContent;
+                const fontMatch = text.match(/--heading-font:\s*([^;]+);/);
+                const btnTextMatch = text.match(/--btn-text:\s*([^;]+);/);
+                const btnBgMatch = text.match(/--btn-bg:\s*([^;]+);/);
+                const hoverTextMatch = text.match(/--btn-hover-text:\s*([^;]+);/);
+                const hoverBgMatch = text.match(/--btn-hover-bg:\s*([^;]+);/);
+                
+                if (fontMatch) this.settings.headingFont = fontMatch[1].trim();
+                if (btnTextMatch) this.settings.btnText = btnTextMatch[1].trim();
+                if (btnBgMatch) this.settings.btnBg = btnBgMatch[1].trim();
+                if (hoverTextMatch) this.settings.btnHoverText = hoverTextMatch[1].trim();
+                if (hoverBgMatch) this.settings.btnHoverBg = hoverBgMatch[1].trim();
+            }
+
+            // Body traversal
+            const newSections = [];
+            const sectionNodes = doc.querySelectorAll('section');
+            sectionNodes.forEach((secNode, sIndex) => {
+                const sectionData = { id: Date.now() + sIndex, collapsed: false, rows: [] };
+                
+                const rowNodes = secNode.querySelectorAll(':scope > .row');
+                rowNodes.forEach((rowNode, rIndex) => {
+                    const rowData = { id: Date.now() + 1000 + rIndex, elements: [], newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false };
+                    
+                    const isGrid = rowNode.classList.contains('grid');
+                    if (isGrid) {
+                        const gridCol = rowNode.style.gridTemplateColumns;
+                        if (gridCol) {
+                            const parts = gridCol.split(' ').map(p => p.trim()).filter(Boolean);
+                            if (parts[0] !== '1fr' && parts[0].includes('%')) {
+                                rowData.imgPosition = 'left';
+                                rowData.imgWidth = parts[0];
+                            } else if (parts[1] && parts[1] !== '1fr' && parts[1].includes('%')) {
+                                rowData.imgPosition = 'right';
+                                rowData.imgWidth = parts[1];
+                            }
+                        } else {
+                            const boxes = rowNode.querySelectorAll(':scope > .box');
+                            if (boxes.length === 2 && boxes[0].querySelector('img')) {
+                                rowData.imgPosition = 'left';
+                            }
+                        }
+                    } else {
+                        // If not grid but has image, it must be full row layout
+                        if (rowNode.querySelector('img')) {
+                            rowData.imgFullRow = true;
+                        }
+                    }
+                    
+                    const containerNodes = isGrid ? rowNode.querySelectorAll(':scope > .box') : [rowNode];
+                    
+                    containerNodes.forEach(cNode => {
+                        Array.from(cNode.children).forEach((elNode, eIndex) => {
+                            const eId = Date.now() + 2000 + eIndex + Math.random();
+                            const tag = elNode.tagName.toLowerCase();
+                            
+                            if (tag === 'h1' || tag === 'h2' || tag === 'h3') {
+                                rowData.elements.push({ id: eId, type: tag, text: elNode.innerText });
+                            } else if (tag === 'p' || tag === 'ul' || tag === 'ol' || tag === 'div') {
+                                // ensure we only parse paragraphs that aren't wrapping box
+                                if(!elNode.classList.contains('box') && !elNode.classList.contains('row')) {
+                                    rowData.elements.push({ id: eId, type: 'p', text: elNode.outerHTML });
+                                }
+                            } else if (tag === 'img') {
+                                rowData.elements.push({ id: eId, type: 'img', src: elNode.getAttribute('src') || '', alt: elNode.getAttribute('alt') || '' });
+                            } else if (tag === 'a' && elNode.classList.contains('cta-btn')) {
+                                rowData.elements.push({ id: eId, type: 'btn', label: elNode.innerText, url: elNode.getAttribute('href') || '#' });
+                            } else if (tag === 'details') {
+                                let faqEl = rowData.elements.find(e => e.type === 'faq' && e.items.length < 3);
+                                if (!faqEl) {
+                                    faqEl = { id: Math.random(), type: 'faq', items: [] };
+                                    rowData.elements.push(faqEl);
+                                }
+                                const summary = elNode.querySelector('summary');
+                                const p = elNode.querySelector('p');
+                                faqEl.items.push({
+                                    q: summary ? summary.innerText : '',
+                                    a: p ? p.innerHTML : ''
+                                });
+                            }
+                        });
+                    });
+                    
+                    // Pad FAQ to 3 spots
+                    rowData.elements.filter(e => e.type === 'faq').forEach(faq => {
+                        while(faq.items.length < 3) faq.items.push({q:'', a:''});
+                    });
+                    
+                    sectionData.rows.push(rowData);
+                });
+                newSections.push(sectionData);
+            });
+            
+            this.sections = newSections;
+            this.showImportModal = false;
+            this.importHtmlStr = '';
+        },
+        insertShortcode(tag) {
+            let str = '';
+            if (tag === 'sec') str = '<p>[section]<br><br>[/section]</p>';
+            if (tag === 'row') str = '<p>Content goes here</p>';
+            if (tag === 'split') str = '<p>[row_image]<br>[img src="url" alt=""]<br>[/row_image]</p><p>[row_text]<br>Content goes here<br>[/row_text]</p>';
+            if (tag === 'btn') str = '<p>[button url="#" label="Click Here"]</p>';
+            if (tag === 'faq') str = '<p>[faq q="Question"]<br>Answer<br>[/faq]</p>';
+            if (tag === 'infographic') str = '<p>[infographic src="url" alt=""]</p>';
+            
+            this.importShortcodeStr = (this.importShortcodeStr ? this.importShortcodeStr + '<br>' : '') + str;
+        },
+        processShortcode() {
+            if (!this.importShortcodeStr) return;
+            
+            let rawText = this.importShortcodeStr;
+            
+            // Clean up Quill HTML wrappers from our pseudo-bbcode tags to prevent dangling HTML
+            let lastText = '';
+            while (lastText !== rawText) {
+                lastText = rawText;
+                rawText = rawText.replace(/<[a-z0-9]+[^>]*>\s*(\[[^\]]+\])\s*<\/[a-z0-9]+>/gi, '$1');
+            }
+            rawText = rawText.replace(/<br\s*\/?>\s*(\[[^\]]+\])/gi, '\n$1');
+            rawText = rawText.replace(/(\[[^\]]+\])\s*<br\s*\/?>/gi, '$1\n');
+            
+            const newSections = [];
+            const sectionRegex = /\[section\]([\s\S]*?)\[\/section\]/gi;
+            
+            let sMatch;
+            while ((sMatch = sectionRegex.exec(rawText)) !== null) {
+                const secContent = sMatch[1];
+                const sectionData = { id: Date.now() + Math.random(), collapsed: false, rows: [] };
+                
+                const parseInlineElements = (text) => {
+                    const els = [];
+                    const inlineRegex = /\[(button|img)\s+([^\]]+)\]/gi;
+                    let lastIdx = 0;
+                    let inlineMatch;
+                    
+                    while ((inlineMatch = inlineRegex.exec(text)) !== null) {
+                        const start = inlineMatch.index;
+                        const prefixText = text.substring(lastIdx, start).trim();
+                        if (prefixText) {
+                            els.push({ type: 'p', text: prefixText });
+                        }
+                        
+                        const tag = inlineMatch[1].toLowerCase();
+                        const attrsRaw = inlineMatch[2];
+                        const getAttr = (name) => {
+                            const m = new RegExp(name + `=(['"])(.*?)\\1`, 'i').exec(attrsRaw);
+                            return m ? m[2] : '';
+                        };
+                        
+                        if (tag === 'button') {
+                            els.push({ type: 'btn', url: getAttr('url') || '#', label: getAttr('label') || 'Button' });
+                        } else if (tag === 'img') {
+                            els.push({ type: 'img', src: getAttr('src'), alt: getAttr('alt') });
+                        }
+                        
+                        lastIdx = inlineRegex.lastIndex;
+                    }
+                    
+                    const suffixText = text.substring(lastIdx).trim();
+                    if (suffixText) {
+                        els.push({ type: 'p', text: suffixText });
+                    }
+                    
+                    return els.map(el => {
+                        el.id = Date.now() + Math.random();
+                        return el;
+                    });
+                };
+
+                const blocks = [];
+                let currentIndex = 0;
+                let accumulatedRaw = '';
+                
+                const isBlank = (html) => {
+                    return !html.replace(/<\/?p>|<br\s*\/?>|\s/gi, '').trim();
+                };
+                
+                while (currentIndex < secContent.length) {
+                    const tagStart = secContent.indexOf('[', currentIndex);
+                    
+                    if (tagStart === -1) {
+                        accumulatedRaw += secContent.substring(currentIndex);
+                        if (!isBlank(accumulatedRaw)) {
+                            blocks.push({ tag: 'row', attrs: '', content: accumulatedRaw });
+                        }
+                        break;
+                    }
+                    
+                    const tagEnd = secContent.indexOf(']', tagStart);
+                    if (tagEnd === -1) {
+                        accumulatedRaw += secContent.substring(currentIndex);
+                        break;
+                    }
+                    
+                    const fullTag = secContent.substring(tagStart + 1, tagEnd);
+                    const parts = fullTag.trim().split(/\s+(.*)/);
+                    const tagName = parts[0];
+                    const attrsRaw = parts[1] || '';
+                    
+                    if (['row', 'row_image', 'row_text', 'faq'].includes(tagName)) {
+                        const closeTag = `[/${tagName}]`;
+                        const closeIdx = secContent.indexOf(closeTag, tagEnd + 1);
+                        if (closeIdx !== -1) {
+                            accumulatedRaw += secContent.substring(currentIndex, tagStart);
+                            if (!isBlank(accumulatedRaw)) {
+                                blocks.push({ tag: 'row', attrs: '', content: accumulatedRaw });
+                                accumulatedRaw = '';
+                            }
+                            
+                            blocks.push({ tag: tagName, attrs: attrsRaw, content: secContent.substring(tagEnd + 1, closeIdx) });
+                            currentIndex = closeIdx + closeTag.length;
+                            continue;
+                        }
+                    } else if (tagName === 'infographic') {
+                        accumulatedRaw += secContent.substring(currentIndex, tagStart);
+                        if (!isBlank(accumulatedRaw)) {
+                            blocks.push({ tag: 'row', attrs: '', content: accumulatedRaw });
+                            accumulatedRaw = '';
+                        }
+                        
+                        blocks.push({ tag: tagName, attrs: attrsRaw, content: '' });
+                        currentIndex = tagEnd + 1;
+                        continue;
+                    }
+                    
+                    // Non-structural tag like [button] or [img] belongs to implicit row
+                    accumulatedRaw += secContent.substring(currentIndex, tagEnd + 1);
+                    currentIndex = tagEnd + 1;
+                }
+                
+                let bIdx = 0;
+                while (bIdx < blocks.length) {
+                    const b = blocks[bIdx];
+                    
+                    if (b.tag === 'row') {
+                        sectionData.rows.push({
+                            id: Date.now() + Math.random(),
+                            elements: parseInlineElements(b.content),
+                            newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false
+                        });
+                    } else if (b.tag === 'row_image' || b.tag === 'row_text') {
+                        let nextB = (bIdx + 1 < blocks.length) ? blocks[bIdx + 1] : null;
+                        let counterpartTag = b.tag === 'row_image' ? 'row_text' : 'row_image';
+                        
+                        let elements = parseInlineElements(b.content);
+                        let imgPos = b.tag === 'row_image' ? 'left' : 'right';
+                        
+                        if (nextB && nextB.tag === counterpartTag) {
+                            elements = elements.concat(parseInlineElements(nextB.content));
+                            bIdx++; 
+                        }
+                        
+                        sectionData.rows.push({
+                            id: Date.now() + Math.random(),
+                            elements: elements,
+                            newTypeSelected: 'p', imgPosition: imgPos, imgWidth: '50%', imgFullRow: false
+                        });
+                    } else if (b.tag === 'infographic') {
+                        const getAttr = (name, str) => {
+                            const m = new RegExp(name + `=(['"])(.*?)\\1`, 'i').exec(str);
+                            return m ? m[2] : '';
+                        };
+                        sectionData.rows.push({
+                            id: Date.now() + Math.random(),
+                            elements: [{ id: Date.now() + Math.random(), type: 'img', src: getAttr('src', b.attrs), alt: getAttr('alt', b.attrs) }],
+                            newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: true
+                        });
+                    } else if (b.tag === 'faq') {
+                        const getAttr = (name, str) => {
+                            const m = new RegExp(name + `=(['"])(.*?)\\1`, 'i').exec(str);
+                            return m ? m[2] : '';
+                        };
+                        let added = false;
+                        if (sectionData.rows.length > 0) {
+                            let lastRow = sectionData.rows[sectionData.rows.length - 1];
+                            if (lastRow.elements.length > 0) {
+                                let lastEl = lastRow.elements[lastRow.elements.length - 1];
+                                if (lastEl.type === 'faq') {
+                                    lastEl.items.push({ q: getAttr('q', b.attrs), a: b.content.trim() });
+                                    added = true;
+                                }
+                            }
+                        }
+                        if (!added) {
+                            sectionData.rows.push({
+                                id: Date.now() + Math.random(),
+                                elements: [{ id: Date.now() + Math.random(), type: 'faq', items: [{ q: getAttr('q', b.attrs), a: b.content.trim() }] }],
+                                newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false
+                            });
+                        }
+                    }
+                    bIdx++;
+                }
+
+                if (sectionData.rows.length > 0) {
+                    newSections.push(sectionData);
+                }
+            }
+            
+            if (newSections.length > 0) {
+                this.sections = newSections;
+                this.showShortcodeModal = false;
+            } else {
+                alert("No valid [section] tags found in input.");
+            }
+        },
+        generateElementHtml(el) {
+            if(el.type === 'h1') return `  <h1>${el.text || ''}</h1>\n`;
+            if(el.type === 'h2') return `  <h2>${el.text || ''}</h2>\n`;
+            if(el.type === 'h3') return `  <h3>${el.text || ''}</h3>\n`;
+            if(el.type === 'p') return `  ${el.text || ''}\n`;
+            if(el.type === 'img') return `  <img src="${el.src || ''}" alt="${el.alt || ''}">\n`;
+            if(el.type === 'btn') return `  <a href="${el.url || '#'}" class="cta-btn">${el.label || 'Click Here'}</a>\n`;
+            if(el.type === 'faq') {
+                let html = '';
+                el.items.forEach(item => {
+                    if(item.q || item.a) {
+                        html += `  <details>\n    <summary>${item.q}</summary>\n    <p>${item.a}</p>\n  </details>\n`;
+                    }
+                });
+                return html;
+            }
+            return '';
+        }
+    },
+    computed: {
+        generatedCode() {
+            if (this.sections.length === 0) return '<!-- Add a section to generate HTML -->';
+
+            // Generate CSS Variables
+            let css = `<style>\n:root {\n  --heading-font: ${this.settings.headingFont};\n  --btn-text: ${this.settings.btnText};\n  --btn-bg: ${this.settings.btnBg};\n  --btn-hover-text: ${this.settings.btnHoverText};\n  --btn-hover-bg: ${this.settings.btnHoverBg};\n}\n
+/* Base Styles */
+h1, h2, h3, h4, h5 { font-family: var(--heading-font); }
+h1 { font-size: clamp(1.75rem, 4vw, 2.25rem); /* 28px -> 36px */ margin: 0 0 0.5em; line-height: 1.2; }
+h2 { font-size: clamp(1.5rem, 3.5vw, 1.8rem); /* 24px -> 29px */ margin: 0 0 0.5em; line-height: 1.2; }
+h3 { font-size: clamp(1.25rem, 3vw, 1.44rem); /* 20px -> 23px */ margin: 0 0 0.5em; line-height: 1.2; }
+p, ul, ol { font-size: clamp(0.95rem, 1.2vw, 1rem); line-height: 1.6; margin: 0 0 1em; }
+li { margin-bottom: 0.5em; }
+
+/* Components */
+.cta-btn {
+  display: inline-block;
+  padding: 12px 24px;
+  color: var(--btn-text);
+  background: var(--btn-bg);
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+.cta-btn:hover {
+  color: var(--btn-hover-text);
+  background: var(--btn-hover-bg);
+}
+
+/* FAQ Details */
+summary { font-size: clamp(1.05rem, 2vw, 1.15rem); font-weight: 600; cursor: pointer; padding: 12px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; }
+details { margin-bottom: 15px; }
+details p { padding: 12px; border: 1px solid #e9ecef; border-top: none; margin: 0; background: #fff; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; }
+
+/* Layout Grid Utilities */
+section { padding: 60px 20px; }
+.row { max-width: 1200px; margin: 0 auto; }
+.row.grid { display: grid; gap: 40px; align-items: center; }
+.box img { width: 100%; height: auto; display: block; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+@media (min-width: 768px) {
+  .row.grid { grid-template-columns: 1fr 1fr; }
+}
+</style>\n\n`;
+
+            let html = '';
+
+            this.sections.forEach((sec, sIdx) => {
+                html += `<!-- Section ${sIdx + 1} -->\n`;
+                html += `<section>\n`;
+
+                sec.rows.forEach(row => {
+                    const isTwoCol = this.hasImage(row) && !row.imgFullRow;
+                    
+                    if (isTwoCol) {
+                        let gridStyle = '';
+                        if (row.imgWidth !== '50%') {
+                            if (row.imgPosition === 'left') {
+                                gridStyle = ` style="grid-template-columns: ${row.imgWidth} 1fr;"`;
+                            } else {
+                                gridStyle = ` style="grid-template-columns: 1fr ${row.imgWidth};"`;
+                            }
+                        }
+
+                        html += `  <div class="row grid"${gridStyle}>\n`;
+                        
+                        // Separate image and text elements
+                        const imgElements = row.elements.filter(e => e.type === 'img');
+                        const textElements = row.elements.filter(e => e.type !== 'img');
+
+                        const generateImgBox = () => {
+                            let b = `    <div class="box">\n`;
+                            imgElements.forEach(el => { b += `    ` + this.generateElementHtml(el).trim() + `\n`; });
+                            return b + `    </div>\n`;
+                        };
+
+                        const generateTextBox = () => {
+                            let b = `    <div class="box">\n`;
+                            textElements.forEach(el => { b += `    ` + this.generateElementHtml(el).trim() + `\n`; });
+                            return b + `    </div>\n`;
+                        };
+                        
+                        if (row.imgPosition === 'left') {
+                            html += generateImgBox() + generateTextBox();
+                        } else {
+                            html += generateTextBox() + generateImgBox();
+                        }
+                        
+                        html += `  </div>\n`;
+                    } else {
+                        html += `  <div class="row">\n`;
+                        row.elements.forEach(el => {
+                            html += this.generateElementHtml(el);
+                        });
+                        html += `  </div>\n`;
+                    }
+                });
+                
+                html += `</section>\n\n`;
+            });
+
+            return css + html.trim();
+        }
+    }
+});
+app.mount('#app');
+</script>
+
+</body>
+</html>

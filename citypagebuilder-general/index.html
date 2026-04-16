@@ -43,6 +43,11 @@
         .type-badge { background: #e0e7ff; color: #4338ca; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: move; }
         .empty-state { text-align: center; padding: 40px; color: #6b7280; background: white; border-radius: 8px; border: 2px dashed #d1d5db; }
         /* Layout Grid System defaults for output */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 800px; max-width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-body textarea { width: 100%; height: 400px; font-family: monospace; padding: 15px; border: 1px solid #d1d5db; border-radius: 6px; resize: vertical; margin-bottom: 20px; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; }
     </style>
 </head>
 <body>
@@ -383,9 +388,30 @@
             <div class="output">
                 <div class="header-actions" style="margin-bottom: 20px;">
                     <h2>Generated HTML</h2>
-                    <button @click="copyToClipboard" class="outline">Copy to Clipboard</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button @click="openPasteModal" class="outline">Paste HTML (output)</button>
+                        <button @click="copyToClipboard" class="outline">Copy to Clipboard</button>
+                    </div>
                 </div>
                 <textarea readonly :value="generatedHtml"></textarea>
+            </div>
+        </div>
+
+        <!-- Paste Modal -->
+        <div v-if="showPasteModal" class="modal-overlay" @click.self="closePasteModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 style="margin: 0;">Paste Generated HTML</h3>
+                    <button class="outline" @click="closePasteModal" style="padding: 4px 10px;">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p style="margin-bottom: 15px; color: #4b5563;">Paste the HTML code you previously generated here to reload it into the builder.</p>
+                    <textarea v-model="pastedHtml" placeholder="Paste HTML here..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button class="outline" @click="closePasteModal">Cancel</button>
+                    <button @click="handleImport">Import & Load</button>
+                </div>
             </div>
         </div>
     </div>
@@ -426,6 +452,8 @@
                     customJs: '',
                     activeTab: 'theme',
                     spaces: ['0','1','2','3','4','5','auto'],
+                    showPasteModal: false,
+                    pastedHtml: '',
                     theme: {
                         h1: { fsMobile: 36, fsTablet: 42, fsDesktop: 48, color: '#111827', mb: '3', mt: '0', fontFamily: '' },
                         h2: { fsMobile: 30, fsTablet: 34, fsDesktop: 38, color: '#111827', mb: '3', mt: '0', fontFamily: '' },
@@ -799,6 +827,266 @@
                     if (type === 'faq') { el.fsMobile = 18; el.fsTablet = 20; el.fsDesktop = 24; el.faqs = [ { q: '', a: '', showRawHtml: false }, { q: '', a: '', showRawHtml: false }, { q: '', a: '', showRawHtml: false } ]; }
 
                     column.elements.push(el);
+                },
+                openPasteModal() { this.showPasteModal = true; this.pastedHtml = ''; },
+                closePasteModal() { this.showPasteModal = false; },
+                handleImport() {
+                    if (!this.pastedHtml.trim()) return;
+                    try {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(this.pastedHtml, 'text/html');
+                        
+                        // 1. EXTRACT STYLES & THEME
+                        const styleTag = doc.querySelector('style');
+                        if (styleTag) {
+                            const css = styleTag.innerText;
+                            
+                            // Extract Global Theme
+                            ['h1', 'h2', 'h3', 'h4', 'h5'].forEach(tag => {
+                                const tagRegex = new RegExp(`${tag}\\s*{([^}]*)}`, 'i');
+                                const match = css.match(tagRegex);
+                                if (match) {
+                                    const props = match[1];
+                                    const colorMatch = props.match(/color:\s*([^!;]*)/i);
+                                    if (colorMatch) this.theme[tag].color = colorMatch[1].trim();
+                                    const ffMatch = props.match(/font-family:\s*([^;]*)/i);
+                                    if (ffMatch) this.theme[tag].fontFamily = ffMatch[1].trim();
+                                    const fsMatch = props.match(/font-size:\s*(\d+)px/i);
+                                    if (fsMatch) this.theme[tag].fsMobile = parseInt(fsMatch[1]);
+                                }
+                                // Tablet/Desktop FS
+                                const tabFsMatch = css.match(new RegExp(`@media\\s*\\(min-width:\\s*768px\\)\\s*{\\s*${tag}\\s*{\\s*font-size:\\s*(\\d+)px`, 'i'));
+                                if (tabFsMatch) this.theme[tag].fsTablet = parseInt(tabFsMatch[1]);
+                                const deskFsMatch = css.match(new RegExp(`@media\\s*\\(min-width:\\s*992px\\)\\s*{\\s*${tag}\\s*{\\s*font-size:\\s*(\\d+)px`, 'i'));
+                                if (deskFsMatch) this.theme[tag].fsDesktop = parseInt(deskFsMatch[1]);
+                            });
+
+                            // CTA Theme
+                            const ctaMatch = css.match(/\.btn-theme\s*{([^}]*)}/i);
+                            if (ctaMatch) {
+                                const props = ctaMatch[1];
+                                const colorMatch = props.match(/color:\s*([^!;]*)/i);
+                                if (colorMatch) this.theme.cta.textColor = colorMatch[1].trim();
+                                const bgMatch = props.match(/background-color:\s*([^!;]*)/i);
+                                if (bgMatch) this.theme.cta.bgColor = bgMatch[1].trim();
+                                const brMatch = props.match(/border-radius:\s*(\d+)px/i);
+                                if (brMatch) this.theme.cta.borderRadius = brMatch[1];
+                                const fsMatch = props.match(/font-size:\s*(\d+)px/i);
+                                if (fsMatch) this.theme.cta.fontSize = parseInt(fsMatch[1]);
+                            }
+                            const ctaHoverMatch = css.match(/\.btn-theme:hover\s*{([^}]*)}/i);
+                            if (ctaHoverMatch) {
+                                const bgMatch = ctaHoverMatch[1].match(/background-color:\s*([^!;]*)/i);
+                                if (bgMatch) this.theme.cta.bgHoverColor = bgMatch[1].trim();
+                            }
+
+                            // Custom User CSS
+                            const customCssMatch = css.split('/* Custom User CSS */');
+                            if (customCssMatch.length > 1) {
+                                this.customCss = customCssMatch[1].replace('</style>', '').trim();
+                            }
+                        }
+
+                        // 2. EXTRACT JS
+                        const scriptTags = doc.querySelectorAll('script');
+                        if (scriptTags.length > 0) {
+                            const lastScript = scriptTags[scriptTags.length - 1];
+                            this.customJs = lastScript.innerText.trim();
+                        }
+
+                        // 3. PARSE SECTIONS
+                        const parsedSections = [];
+                        const sections = doc.querySelectorAll('section');
+                        
+                        sections.forEach(sec => {
+                            const sId = sec.id || (Date.now().toString(36) + Math.random().toString(36).substr(2, 5));
+                            const section = { id: sId, rows: [], pt: '', pb: '', bgColor: '#ffffff' };
+                            
+                            // Spacing Classes
+                            const secClasses = Array.from(sec.classList);
+                            secClasses.forEach(c => {
+                                if (c.startsWith('pt-')) section.pt = c.split('-')[1];
+                                if (c.startsWith('pb-')) section.pb = c.split('-')[1];
+                                if (c.startsWith('custom-sec-') && styleTag) {
+                                    const bgMatch = styleTag.innerText.match(new RegExp(`\\.${c}\\s*{\\s*background-color:\\s*([^!;]*)`, 'i'));
+                                    if (bgMatch) section.bgColor = bgMatch[1].trim();
+                                }
+                            });
+
+                            // ROWS
+                            const rows = sec.querySelectorAll('.row');
+                            rows.forEach(rowEl => {
+                                const row = { id: Date.now() + Math.random(), columns: [], centerAlign: rowEl.classList.contains('text-center'), layout: '50_50', reverse: false };
+                                
+                                const cols = Array.from(rowEl.children).filter(child => child.className.includes('col-'));
+                                if (cols.length === 2) {
+                                    const c1 = cols[0].className;
+                                    const c2 = cols[1].className;
+                                    if (c1.includes('col-lg-5')) row.layout = '40_60';
+                                    else if (c1.includes('col-lg-7')) { row.layout = '40_60'; row.reverse = true; }
+                                    else if (c1.includes('col-lg-4')) row.layout = '30_70';
+                                    else if (c1.includes('col-lg-8')) { row.layout = '30_70'; row.reverse = true; }
+                                    else if (c1.includes('col-lg-3')) row.layout = '25_75';
+                                    else if (c1.includes('col-lg-9')) { row.layout = '25_75'; row.reverse = true; }
+                                    else if (c1.includes('col-lg-6')) row.layout = '50_50';
+                                }
+
+                                cols.forEach(colEl => {
+                                    const column = { id: Date.now() + Math.random(), elements: [], selectedType: 'heading' };
+                                    
+                                    // ELEMENTS
+                                    const elements = colEl.children;
+                                    for (let elEl of elements) {
+                                        const el = { id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5) };
+                                        
+                                        // Heading
+                                        if (['H1', 'H2', 'H3', 'H4', 'H5'].includes(elEl.tagName)) {
+                                            el.type = 'heading';
+                                            el.text = elEl.innerText;
+                                            el.tag = elEl.tagName.toLowerCase();
+                                            el.align = elEl.classList.contains('text-center') ? 'center' : elEl.classList.contains('text-end') ? 'right' : 'left';
+                                            
+                                            // Handle Overrides
+                                            const clsid = Array.from(elEl.classList).find(c => c.startsWith('el-'));
+                                            if (clsid && styleTag) {
+                                                el.overrideTheme = true;
+                                                const css = styleTag.innerText;
+                                                const match = css.match(new RegExp(`\\.${clsid}\\s*{([^}]*)}`, 'i'));
+                                                if (match) {
+                                                    const props = match[1];
+                                                    const colorMatch = props.match(/color:\s*([^!;]*)/i);
+                                                    if (colorMatch) el.color = colorMatch[1].trim();
+                                                    const ffMatch = props.match(/font-family:\s*([^;]*)/i);
+                                                    if (ffMatch) el.fontFamily = ffMatch[1].trim();
+                                                    const fsMatch = props.match(/font-size:\s*(\d+)px/i);
+                                                    if (fsMatch) el.fsMobile = parseInt(fsMatch[1]);
+                                                }
+                                                // Spacing from classes
+                                                elEl.classList.forEach(c => {
+                                                    if (c.startsWith('mt-')) el.mt = c.split('-')[1];
+                                                    if (c.startsWith('mb-')) el.mb = c.split('-')[1];
+                                                    if (c.startsWith('pt-')) el.pt = c.split('-')[1];
+                                                    if (c.startsWith('pb-')) el.pb = c.split('-')[1];
+                                                });
+                                            } else {
+                                                el.overrideTheme = false;
+                                                el.color = this.theme[el.tag]?.color || '#000000';
+                                            }
+                                            column.elements.push(el);
+                                        }
+                                        // Rich Text
+                                        else if (elEl.classList.contains('lead')) {
+                                            el.type = 'p';
+                                            el.text = elEl.innerHTML.trim();
+                                            el.isCenterAlign = elEl.classList.contains('text-center');
+                                            elEl.classList.forEach(c => {
+                                                if (c.startsWith('mt-')) el.mt = c.split('-')[1];
+                                                if (c.startsWith('mb-')) el.mb = c.split('-')[1];
+                                                if (c.startsWith('pt-')) el.pt = c.split('-')[1];
+                                                if (c.startsWith('pb-')) el.pb = c.split('-')[1];
+                                            });
+                                            column.elements.push(el);
+                                        }
+                                        // Image
+                                        else if (elEl.tagName === 'FIGURE') {
+                                            el.type = 'img';
+                                            const img = elEl.querySelector('img');
+                                            el.src = img ? img.getAttribute('src') : '';
+                                            el.alt = img ? img.getAttribute('alt') : '';
+                                            el.align = elEl.classList.contains('text-center') ? 'center' : elEl.classList.contains('text-end') ? 'right' : 'left';
+                                            elEl.classList.forEach(c => {
+                                                if (c.startsWith('mt-')) el.mt = c.split('-')[1];
+                                                if (c.startsWith('mb-')) el.mb = c.split('-')[1];
+                                                if (c.startsWith('ms-')) el.ms = c.split('-')[1];
+                                                if (c.startsWith('me-')) el.me = c.split('-')[1];
+                                                if (c.startsWith('pt-')) el.pt = c.split('-')[1];
+                                                if (c.startsWith('pb-')) el.pb = c.split('-')[1];
+                                                if (c.startsWith('ps-')) el.ps = c.split('-')[1];
+                                                if (c.startsWith('pe-')) el.pe = c.split('-')[1];
+                                            });
+                                            column.elements.push(el);
+                                        }
+                                        // CTA
+                                        else if (elEl.classList.contains('cta-group')) {
+                                            el.type = 'cta';
+                                            el.buttons = [];
+                                            const btns = elEl.querySelectorAll('a');
+                                            btns.forEach(b => el.buttons.push({ text: b.innerText, href: b.getAttribute('href'), customClass: b.className.replace(/btn|btn-theme|pt-\d|pb-\d|ps-\d|pe-\d|el-.*-btn/g, '').trim() }));
+                                            
+                                            const clsid = Array.from(elEl.classList).find(c => c.startsWith('el-'));
+                                            if (clsid && styleTag) {
+                                                el.overrideTheme = true;
+                                                const match = styleTag.innerText.match(new RegExp(`\\.${clsid}\\s*{([^}]*)}`, 'i'));
+                                                if (match) {
+                                                    const jcMatch = match[1].match(/justify-content:\s*([^;]*)/i);
+                                                    if (jcMatch) el.align = jcMatch[1].includes('center') ? 'center' : jcMatch[1].includes('end') ? 'right' : 'left';
+                                                }
+                                                // Spacing from classes
+                                                elEl.classList.forEach(c => {
+                                                    if (c.startsWith('mt-')) el.mt = c.split('-')[1];
+                                                    if (c.startsWith('mb-')) el.mb = c.split('-')[1];
+                                                });
+                                                // Button Theme overrides
+                                                const btnMatch = styleTag.innerText.match(new RegExp(`\\.${clsid}-btn\\s*{([^}]*)}`, 'i'));
+                                                if (btnMatch) {
+                                                    const props = btnMatch[1];
+                                                    const colorMatch = props.match(/color:\s*([^!;]*)/i);
+                                                    if (colorMatch) el.textColor = colorMatch[1].trim();
+                                                    const bgMatch = props.match(/background-color:\s*([^!;]*)/i);
+                                                    if (bgMatch) el.bgColor = bgMatch[1].trim();
+                                                }
+                                            } else {
+                                                el.overrideTheme = false;
+                                                el.align = elEl.classList.contains('justify-content-center') ? 'center' : elEl.classList.contains('justify-content-end') ? 'right' : 'left';
+                                            }
+                                            column.elements.push(el);
+                                        }
+                                        // FAQ
+                                        else if (elEl.classList.contains('faq-container')) {
+                                            el.type = 'faq';
+                                            el.faqs = [];
+                                            const details = elEl.querySelectorAll('details');
+                                            details.forEach(d => {
+                                                const q = d.querySelector('summary').innerText;
+                                                const a = d.querySelector('.faq-content').innerHTML.trim();
+                                                el.faqs.push({ q, a, showRawHtml: false });
+                                            });
+                                            // Sizes from CSS
+                                            const firstSum = details[0]?.querySelector('summary');
+                                            if (firstSum && styleTag) {
+                                                const clsid = Array.from(firstSum.classList).find(c => c.endsWith('-summary'));
+                                                if (clsid) {
+                                                    const css = styleTag.innerText;
+                                                    const fsMatch = css.match(new RegExp(`\\.${clsid}\\s*{\\s*font-size:\\s*(\\d+)px`, 'i'));
+                                                    if (fsMatch) el.fsMobile = parseInt(fsMatch[1]);
+                                                    const tabFsMatch = css.match(new RegExp(`@media\\s*\\(min-width:\\s*768px\\)\\s*{\\s*\\.${clsid}\\s*{\\s*font-size:\\s*(\\d+)px`, 'i'));
+                                                    if (tabFsMatch) el.fsTablet = parseInt(tabFsMatch[1]);
+                                                    const deskFsMatch = css.match(new RegExp(`@media\\s*\\(min-width:\\s*992px\\)\\s*{\\s*\\.${clsid}\\s*{\\s*font-size:\\s*(\\d+)px`, 'i'));
+                                                    if (deskFsMatch) el.fsDesktop = parseInt(deskFsMatch[1]);
+                                                }
+                                            }
+                                            column.elements.push(el);
+                                        }
+                                    }
+                                    row.columns.push(column);
+                                });
+                                section.rows.push(row);
+                            });
+                            parsedSections.push(section);
+                        });
+
+                        if (parsedSections.length > 0) {
+                            this.sections = parsedSections;
+                            this.closePasteModal();
+                            alert("HTML Imported successfully!");
+                        } else {
+                            alert("No valid sections found in the pasted HTML.");
+                        }
+
+                    } catch (e) {
+                        console.error("Import failed", e);
+                        alert("Failed to parse HTML. Please make sure it's a valid output from this builder.");
+                    }
                 },
                 removeSection(idx) { if (confirm("Remove section?")) this.sections.splice(idx, 1); },
                 removeRow(sec, idx) { sec.rows.splice(idx, 1); },
