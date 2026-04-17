@@ -234,6 +234,7 @@
                                 <label>Button URL/Link</label>
                                 <input type="text" v-model="el.url" placeholder="/contact-us">
                             </div>
+                            <label style="display:inline-flex; align-items:center; font-size:12px; font-weight:normal; text-transform:none; margin-top:8px;"><input type="checkbox" v-model="el.alignCenter" style="width:auto; margin-right:5px; margin-bottom:0;"> Center Align Button</label>
                         </div>
 
                         <!-- Spacer -->
@@ -403,7 +404,7 @@ const app = Vue.createApp({
             let elements = [
                 { id: Date.now()+1, type: 'img', src: '', alt: 'Infographic' },
                 { id: Date.now()+2, type: 'p', text: '<p>Optional description goes here.</p>' },
-                { id: Date.now()+3, type: 'btn', label: 'Optional Button', url: '#' }
+                { id: Date.now()+3, type: 'btn', label: 'Optional Button', url: '#', alignCenter: true }
             ];
             this.sections.push({ id: Date.now(), collapsed: false, rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: true }] });
         },
@@ -411,7 +412,7 @@ const app = Vue.createApp({
             let elements = [
                 { id: Date.now()+1, type: 'h2', text: 'Ready to get started?' },
                 { id: Date.now()+2, type: 'p', text: '<p>Contact us today for a free consultation.</p>' },
-                { id: Date.now()+3, type: 'btn', label: 'Call Now', url: '#' }
+                { id: Date.now()+3, type: 'btn', label: 'Call Now', url: '#', alignCenter: true }
             ];
             this.sections.push({ id: Date.now(), collapsed: false, rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
         },
@@ -422,7 +423,7 @@ const app = Vue.createApp({
             if(!row.newTypeSelected) return;
             const el = { id: Date.now(), type: row.newTypeSelected };
             if(el.type === 'faq') el.items = [{q:'',a:''},{q:'',a:''},{q:'',a:''}];
-            if(el.type === 'btn') { el.label = 'Click Here'; el.url = '#'; }
+            if(el.type === 'btn') { el.label = 'Click Here'; el.url = '#'; el.alignCenter = true; }
             row.elements.push(el);
         },
         hasImage(row) {
@@ -773,7 +774,10 @@ const app = Vue.createApp({
             if(el.type === 'p') return `  ${el.text || ''}\n`;
             if(el.type === 'spacer') return `  <div style="height: ${el.height || 20}px;"></div>\n`;
             if(el.type === 'img') return `  <img src="${el.src || ''}" alt="${el.alt || ''}"${el.alignCenter ? ' style="margin: 0 auto;"' : ''}>\n`;
-            if(el.type === 'btn') return `  <a href="${el.url || '#'}" class="cta-btn">${el.label || 'Click Here'}</a>\n`;
+            if(el.type === 'btn') {
+                const btnHtml = `<a href="${el.url || '#'}" class="cta-btn">${el.label || 'Click Here'}</a>`;
+                return (el.alignCenter !== false) ? `  <div style="text-align: center;">\n    ${btnHtml}\n  </div>\n` : `  ${btnHtml}\n`;
+            }
             if(el.type === 'faq') {
                 let html = '';
                 el.items.forEach(item => {
