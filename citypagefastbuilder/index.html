@@ -201,8 +201,9 @@
                         </div>
 
                         <!-- H1, H2, H3 inputs -->
-                        <div v-if="['h1', 'h2', 'h3'].includes(el.type)" class="form-group">
+                        <div v-if="['h1', 'h2', 'h3'].includes(el.type)" class="form-group" style="margin-bottom: 0;">
                             <input type="text" v-model="el.text" :placeholder="'Enter ' + el.type + ' text...'">
+                            <label style="display:inline-flex; align-items:center; font-size:12px; font-weight:normal; text-transform:none; margin-top:8px;"><input type="checkbox" v-model="el.alignCenter" style="width:auto; margin-right:5px; margin-bottom:0;"> Center Align Text</label>
                         </div>
 
                         <!-- Paragraph (Rich Text) -->
@@ -220,6 +221,7 @@
                                 <label>Alt Text</label>
                                 <input type="text" v-model="el.alt" placeholder="Image description">
                             </div>
+                            <label style="display:inline-flex; align-items:center; font-size:12px; font-weight:normal; text-transform:none; margin-top:8px;"><input type="checkbox" v-model="el.alignCenter" style="width:auto; margin-right:5px; margin-bottom:0;"> Center Align Image</label>
                         </div>
 
                         <!-- Button -->
@@ -765,12 +767,12 @@ const app = Vue.createApp({
             }
         },
         generateElementHtml(el) {
-            if(el.type === 'h1') return `  <h1>${el.text || ''}</h1>\n`;
-            if(el.type === 'h2') return `  <h2>${el.text || ''}</h2>\n`;
-            if(el.type === 'h3') return `  <h3>${el.text || ''}</h3>\n`;
+            if(el.type === 'h1') return `  <h1${el.alignCenter ? ' style="text-align: center;"' : ''}>${el.text || ''}</h1>\n`;
+            if(el.type === 'h2') return `  <h2${el.alignCenter ? ' style="text-align: center;"' : ''}>${el.text || ''}</h2>\n`;
+            if(el.type === 'h3') return `  <h3${el.alignCenter ? ' style="text-align: center;"' : ''}>${el.text || ''}</h3>\n`;
             if(el.type === 'p') return `  ${el.text || ''}\n`;
             if(el.type === 'spacer') return `  <div style="height: ${el.height || 20}px;"></div>\n`;
-            if(el.type === 'img') return `  <img src="${el.src || ''}" alt="${el.alt || ''}">\n`;
+            if(el.type === 'img') return `  <img src="${el.src || ''}" alt="${el.alt || ''}"${el.alignCenter ? ' style="margin: 0 auto;"' : ''}>\n`;
             if(el.type === 'btn') return `  <a href="${el.url || '#'}" class="cta-btn">${el.label || 'Click Here'}</a>\n`;
             if(el.type === 'faq') {
                 let html = '';
