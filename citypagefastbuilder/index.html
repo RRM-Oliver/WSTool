@@ -250,7 +250,7 @@
                             <div v-for="(f, i) in el.items" :key="i" style="background:#fff; border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:4px;">
                                 <div class="form-group">
                                     <label>Question {{i+1}}</label>
-                                    <input type="text" v-model="f.q" placeholder="Question?">
+                                    <rich-text-editor v-model="f.q"></rich-text-editor>
                                 </div>
                                 <div class="form-group" style="margin-bottom:0;">
                                     <label>Answer {{i+1}}</label>
@@ -782,7 +782,8 @@ const app = Vue.createApp({
                 let html = '';
                 el.items.forEach(item => {
                     if(item.q || item.a) {
-                        html += `  <details>\n    <summary>${item.q}</summary>\n    <p>${item.a}</p>\n  </details>\n`;
+                        const cleanQ = (item.q || '').replace(/<\/?p[^>]*>/gi, '').trim();
+                        html += `  <details>\n    <summary>${cleanQ}</summary>\n    <p>${item.a}</p>\n  </details>\n`;
                     }
                 });
                 return html;
