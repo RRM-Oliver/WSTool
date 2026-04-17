@@ -250,11 +250,11 @@
                             <div v-for="(f, i) in el.items" :key="i" style="background:#fff; border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:4px;">
                                 <div class="form-group">
                                     <label>Question {{i+1}}</label>
-                                    <rich-text-editor v-model="f.q"></rich-text-editor>
+                                    <input type="text" v-model="f.q" placeholder="Question?">
                                 </div>
-                                <div class="form-group" style="margin-bottom:0;">
+                                <div class="form-group" style="margin-bottom:0; background:white;">
                                     <label>Answer {{i+1}}</label>
-                                    <textarea v-model="f.a" placeholder="Answer text..."></textarea>
+                                    <rich-text-editor v-model="f.a"></rich-text-editor>
                                 </div>
                             </div>
                         </div>
@@ -782,8 +782,7 @@ const app = Vue.createApp({
                 let html = '';
                 el.items.forEach(item => {
                     if(item.q || item.a) {
-                        const cleanQ = (item.q || '').replace(/<\/?p[^>]*>/gi, '').trim();
-                        html += `  <details>\n    <summary>${cleanQ}</summary>\n    <p>${item.a}</p>\n  </details>\n`;
+                        html += `  <details>\n    <summary>${item.q}</summary>\n    <div class="faq-answer">\n      ${item.a}\n    </div>\n  </details>\n`;
                     }
                 });
                 return html;
@@ -824,7 +823,8 @@ li { margin-bottom: 0.5em; }
 /* FAQ Details */
 summary { font-size: clamp(1.05rem, 2vw, 1.15rem); font-weight: 600; cursor: pointer; padding: 12px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; }
 details { margin-bottom: 15px; }
-details p { padding: 12px; border: 1px solid #e9ecef; border-top: none; margin: 0; background: #fff; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; }
+details .faq-answer { padding: 12px; border: 1px solid #e9ecef; border-top: none; margin: 0; background: #fff; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; }
+details .faq-answer > :last-child { margin-bottom: 0; }
 
 /* Layout Grid Utilities */
 section { padding: 60px 20px; }
