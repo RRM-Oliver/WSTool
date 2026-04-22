@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Maker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-soft: rgba(59, 130, 246, 0.1);
+            --bg-main: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-dim: #64748b;
+            --border: #e2e8f0;
+            --radius-lg: 32px;
+            --radius-md: 20px;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+            --shadow-hover: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Montserrat', sans-serif;
+            min-height: 100vh;
+            padding: 3rem 1rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 680px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        header { text-align: center; margin-bottom: 0.5rem; }
+
+        .brand-text {
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            text-transform: uppercase;
+            color: var(--text-main);
+        }
+        .brand-text::after { content: '.'; color: var(--primary); }
+
+        header .subtitle {
+            color: var(--text-dim);
+            font-size: 1rem;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        .card:hover { box-shadow: var(--shadow-hover); }
+
+        .card h2 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 1.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-bottom: 1.5rem;
+        }
+        .field:last-of-type { margin-bottom: 0; }
+
+        label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-main);
+        }
+
+        input[type="url"], input[type="text"] {
+            background: #f1f5f9;
+            border: 1.5px solid transparent;
+            border-radius: var(--radius-md);
+            padding: 0.9rem 1.25rem;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: var(--transition);
+            width: 100%;
+        }
+        input[type="url"]:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px var(--primary-soft);
+        }
+        input.error {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 4px rgba(239,68,68,0.15) !important;
+        }
+
+        /* Logo upload */
+        .logo-drop {
+            border: 2px dashed #cbd5e1;
+            border-radius: var(--radius-md);
+            padding: 2rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .logo-drop:hover, .logo-drop.drag-over {
+            border-color: var(--primary);
+            background: var(--primary-soft);
+        }
+        .logo-drop input { display: none; }
+
+        .upload-placeholder svg {
+            width: 36px;
+            height: 36px;
+            color: var(--text-dim);
+            margin: 0 auto 0.75rem;
+            display: block;
+        }
+        .upload-placeholder p {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .upload-placeholder .hint {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 0.35rem;
+        }
+
+        .logo-preview {
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            text-align: left;
+        }
+        .logo-drop.has-logo .logo-preview { display: flex; }
+        .logo-drop.has-logo .upload-placeholder { display: none; }
+
+        .logo-thumb {
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: white;
+            flex-shrink: 0;
+        }
+        .logo-meta { flex: 1; }
+        .logo-filename { font-weight: 700; font-size: 0.9rem; }
+        .logo-sub { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.2rem; }
+
+        .btn-remove {
+            background: #fee2e2;
+            color: #ef4444;
+            border: none;
+            border-radius: 10px;
+            padding: 0.45rem 0.9rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+        .btn-remove:hover { background: #fecaca; }
+
+        /* Buttons */
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            font-family: inherit;
+            width: 100%;
+        }
+        .btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        .btn-primary { background: var(--primary); color: white; margin-top: 1.75rem; }
+        .btn-primary:hover:not(:disabled) {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(59,130,246,0.3);
+        }
+        .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+        .btn-outline {
+            background: #f1f5f9;
+            color: var(--text-main);
+            border: 1.5px solid var(--border);
+        }
+        .btn-outline:hover {
+            background: #e2e8f0;
+            transform: translateY(-2px);
+        }
+
+        /* Output section */
+        .output-card { display: none; }
+        .output-card.visible { display: block; }
+
+        .preview-wrap {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        #previewCanvas {
+            width: 280px;
+            height: 280px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-hover);
+            display: block;
+        }
+
+        .download-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .eps-note {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            text-align: center;
+            margin-top: 1.25rem;
+            line-height: 1.6;
+            padding: 0.75rem 1rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: none;
+        }
+        .eps-note.visible { display: block; }
+
+        footer {
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            padding-top: 0.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .download-grid { grid-template-columns: 1fr; }
+            .brand-text { font-size: 2.2rem; }
+            .card { padding: 1.75rem; }
+        }
+    </style>
+</head>
+<body>
+<main class="app-container">
+
+    <header>
+        <h1 class="brand-text">RRM Studio</h1>
+        <p class="subtitle">QR Code Maker</p>
+    </header>
+
+    <section class="card">
+        <h2>Generate QR Code</h2>
+
+        <div class="field">
+            <label for="urlInput">URL</label>
+            <input type="url" id="urlInput" placeholder="https://example.com" autocomplete="url">
+        </div>
+
+        <div class="field">
+            <label>Logo <span style="font-weight:400;color:var(--text-dim);">(Optional)</span></label>
+            <div class="logo-drop" id="logoDrop">
+                <input type="file" id="logoInput" accept="image/*">
+                <div class="upload-placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    <p>Click or drop logo image here</p>
+                    <div class="hint">PNG with transparency recommended · centered on QR code</div>
+                </div>
+                <div class="logo-preview">
+                    <img class="logo-thumb" id="logoThumb" src="" alt="Logo preview">
+                    <div class="logo-meta">
+                        <div class="logo-filename" id="logoFilename"></div>
+                        <div class="logo-sub">Will be centered on QR code</div>
+                    </div>
+                    <button class="btn-remove" id="logoRemove" type="button">Remove</button>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" id="generateBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+                <path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 17v3"/>
+            </svg>
+            Generate QR Code
+        </button>
+    </section>
+
+    <section class="card output-card" id="outputCard">
+        <h2>Output · 1000 × 1000 px</h2>
+
+        <div class="preview-wrap">
+            <canvas id="previewCanvas" width="1000" height="1000"></canvas>
+        </div>
+
+        <div class="download-grid">
+            <button class="btn btn-primary" id="downloadPng" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download PNG
+            </button>
+            <button class="btn btn-outline" id="downloadEps" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download EPS
+            </button>
+        </div>
+
+        <div class="eps-note" id="epsNote">
+            EPS is vector-only (no raster logo). A white area is reserved in the centre — place your logo artwork on top in Illustrator / InDesign.
+        </div>
+    </section>
+
+    <footer>&copy; 2026 RRM Studio</footer>
+</main>
+
+<script>
+// ─── Constants ────────────────────────────────────────────────────────────────
+const CANVAS_PX = 1000;
+const QR_MARGIN = 4;     // quiet-zone modules on each side
+const LOGO_FRAC = 0.28;  // logo area = 28% of canvas
+const LOGO_PAD  = 10;    // px padding behind logo (at 1000px scale)
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let logoDataURL = null;
+let activeQR    = null;  // qrcode-generator object, kept for EPS export
+
+// ─── DOM refs ─────────────────────────────────────────────────────────────────
+const urlInput     = document.getElementById('urlInput');
+const logoDrop     = document.getElementById('logoDrop');
+const logoInput    = document.getElementById('logoInput');
+const logoThumb    = document.getElementById('logoThumb');
+const logoFilename = document.getElementById('logoFilename');
+const logoRemove   = document.getElementById('logoRemove');
+const generateBtn  = document.getElementById('generateBtn');
+const outputCard   = document.getElementById('outputCard');
+const previewCanvas = document.getElementById('previewCanvas');
+const downloadPng  = document.getElementById('downloadPng');
+const downloadEps  = document.getElementById('downloadEps');
+const epsNote      = document.getElementById('epsNote');
+
+// ─── Logo upload ──────────────────────────────────────────────────────────────
+logoDrop.addEventListener('click', e => {
+    if (!e.target.closest('.btn-remove')) logoInput.click();
+});
+logoDrop.addEventListener('dragover', e => { e.preventDefault(); logoDrop.classList.add('drag-over'); });
+logoDrop.addEventListener('dragleave', () => logoDrop.classList.remove('drag-over'));
+logoDrop.addEventListener('drop', e => {
+    e.preventDefault();
+    logoDrop.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('image/')) applyLogo(f);
+});
+logoInput.addEventListener('change', () => {
+    if (logoInput.files[0]) applyLogo(logoInput.files[0]);
+});
+logoRemove.addEventListener('click', e => { e.stopPropagation(); clearLogo(); });
+
+function applyLogo(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+        logoDataURL = e.target.result;
+        logoThumb.src = logoDataURL;
+        logoFilename.textContent = file.name;
+        logoDrop.classList.add('has-logo');
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearLogo() {
+    logoDataURL = null;
+    logoThumb.src = '';
+    logoFilename.textContent = '';
+    logoDrop.classList.remove('has-logo');
+    logoInput.value = '';
+}
+
+// ─── Generate ─────────────────────────────────────────────────────────────────
+generateBtn.addEventListener('click', async () => {
+    const url = urlInput.value.trim();
+    if (!url) {
+        urlInput.classList.add('error');
+        urlInput.focus();
+        setTimeout(() => urlInput.classList.remove('error'), 2200);
+        return;
+    }
+
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin .8s linear infinite">
+            <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".25"/>
+            <path d="M21 12a9 9 0 00-9-9"/>
+        </svg>
+        Generating…`;
+
+    try {
+        // qrcode-generator: type 0 = auto-select minimum version, 'H' = high error correction
+        const qr = qrcode(0, 'H');
+        qr.addData(url);
+        qr.make();
+        activeQR = qr;
+
+        await renderCanvas(qr);
+
+        outputCard.classList.add('visible');
+        epsNote.classList.toggle('visible', !!logoDataURL);
+        outputCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (err) {
+        alert('QR generation failed: ' + err.message);
+        console.error(err);
+    } finally {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+                <path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 17v3"/>
+            </svg>
+            Generate QR Code`;
+    }
+});
+
+// ─── Canvas rendering ─────────────────────────────────────────────────────────
+async function renderCanvas(qr) {
+    const ctx = previewCanvas.getContext('2d');
+    const n   = qr.getModuleCount();
+    const totalMods = n + QR_MARGIN * 2;
+    const cell = CANVAS_PX / totalMods;
+
+    // White background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, CANVAS_PX, CANVAS_PX);
+
+    // Draw modules
+    ctx.fillStyle = '#000000';
+    for (let row = 0; row < n; row++) {
+        for (let col = 0; col < n; col++) {
+            if (qr.isDark(row, col)) {
+                const x = (col + QR_MARGIN) * cell;
+                const y = (row + QR_MARGIN) * cell;
+                // Slightly oversize each cell by 0.5px to avoid hairline gaps
+                ctx.fillRect(x, y, cell + 0.5, cell + 0.5);
+            }
+        }
+    }
+
+    if (logoDataURL) await stampLogo(ctx);
+}
+
+function stampLogo(ctx) {
+    return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+            const area   = CANVAS_PX * LOGO_FRAC;
+            const bgSize = area + LOGO_PAD * 2;
+            const bgX    = (CANVAS_PX - bgSize) / 2;
+            const bgY    = (CANVAS_PX - bgSize) / 2;
+
+            // White rounded background
+            ctx.fillStyle = '#ffffff';
+            roundRect(ctx, bgX, bgY, bgSize, bgSize, 18);
+            ctx.fill();
+
+            // Logo — fit inside area preserving aspect ratio
+            const scale = Math.min(area / img.width, area / img.height);
+            const w = img.width  * scale;
+            const h = img.height * scale;
+            ctx.drawImage(img, (CANVAS_PX - w) / 2, (CANVAS_PX - h) / 2, w, h);
+            resolve();
+        };
+        img.src = logoDataURL;
+    });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+}
+
+// ─── Downloads ────────────────────────────────────────────────────────────────
+downloadPng.addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.download = 'qrcode.png';
+    a.href = previewCanvas.toDataURL('image/png');
+    a.click();
+});
+
+downloadEps.addEventListener('click', () => {
+    if (!activeQR) return;
+    const eps  = buildEPS(activeQR, !!logoDataURL);
+    const blob = new Blob([eps], { type: 'application/postscript' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.download = 'qrcode.eps';
+    a.href = url;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+});
+
+// ─── EPS builder ──────────────────────────────────────────────────────────────
+// Output: 100 mm × 100 mm (283.465 pt) bounding box — fully scalable vector
+function buildEPS(qr, hasLogo) {
+    const n         = qr.getModuleCount();
+    const PT        = 283.465;                   // 100 mm in PostScript points
+    const totalMods = n + QR_MARGIN * 2;
+    const modPt     = PT / totalMods;            // points per module
+    const offsetPt  = QR_MARGIN * modPt;         // quiet-zone offset in points
+
+    const lines = [
+        '%!PS-Adobe-3.0 EPSF-3.0',
+        `%%BoundingBox: 0 0 ${Math.ceil(PT)} ${Math.ceil(PT)}`,
+        `%%HiResBoundingBox: 0 0 ${PT.toFixed(4)} ${PT.toFixed(4)}`,
+        '%%Creator: RRM Studio QR Code Maker',
+        '%%EndComments',
+        '',
+        '% White background',
+        '1 setgray',
+        `0 0 ${PT.toFixed(4)} ${PT.toFixed(4)} rectfill`,
+        '',
+        '% QR Code modules',
+        '0 setgray',
+        '',
+    ];
+
+    for (let row = 0; row < n; row++) {
+        for (let col = 0; col < n; col++) {
+            if (!qr.isDark(row, col)) continue;
+            // EPS origin is bottom-left; flip Y axis
+            const x = offsetPt + col * modPt;
+            const y = PT - offsetPt - (row + 1) * modPt;
+            lines.push(`${x.toFixed(4)} ${y.toFixed(4)} ${modPt.toFixed(4)} ${modPt.toFixed(4)} rectfill`);
+        }
+    }
+
+    if (hasLogo) {
+        const logoFrac = LOGO_FRAC + (LOGO_PAD * 2) / CANVAS_PX;
+        const whiteSz  = PT * logoFrac;
+        const whiteXY  = (PT - whiteSz) / 2;
+        lines.push('');
+        lines.push('% Logo placeholder — place logo artwork on top in Illustrator / InDesign');
+        lines.push('1 setgray');
+        lines.push(`${whiteXY.toFixed(4)} ${whiteXY.toFixed(4)} ${whiteSz.toFixed(4)} ${whiteSz.toFixed(4)} rectfill`);
+    }
+
+    lines.push('', '%%EOF', '');
+    return lines.join('\n');
+}
+
+// Spin animation for loading indicator
+const _style = document.createElement('style');
+_style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+document.head.appendChild(_style);
+</script>
+</body>
+</html>

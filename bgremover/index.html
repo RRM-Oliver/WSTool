@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BG Remover</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-soft: rgba(59, 130, 246, 0.1);
+            --danger: #ef4444;
+            --success: #10b981;
+            --bg-main: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-dim: #64748b;
+            --border: #e2e8f0;
+            --radius-lg: 32px;
+            --radius-md: 20px;
+            --radius-sm: 12px;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+            --shadow-hover: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Montserrat', sans-serif;
+            min-height: 100vh;
+            padding: 3rem 1rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 960px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        header { text-align: center; margin-bottom: 0.5rem; }
+
+        .brand-text {
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            text-transform: uppercase;
+            color: var(--text-main);
+        }
+        .brand-text::after { content: '.'; color: var(--primary); }
+
+        header .subtitle {
+            color: var(--text-dim);
+            font-size: 1rem;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 0.75rem;
+            transition: var(--transition);
+        }
+        .back-link:hover { color: var(--primary); }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .card h2 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .dropzone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-md);
+            padding: 3rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background: #f8fafc;
+        }
+        .dropzone:hover,
+        .dropzone.dragover {
+            border-color: var(--primary);
+            background: var(--primary-soft);
+        }
+        .dropzone.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .dropzone svg {
+            width: 48px;
+            height: 48px;
+            color: var(--text-dim);
+            margin-bottom: 1rem;
+        }
+        .dropzone .primary-text {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 0.35rem;
+        }
+        .dropzone .secondary-text {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+
+        #fileInput { display: none; }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        @media (max-width: 700px) {
+            .preview-grid { grid-template-columns: 1fr; }
+        }
+
+        .preview-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .preview-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-dim);
+        }
+
+        .preview-box {
+            position: relative;
+            aspect-ratio: 1/1;
+            background:
+                linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+                linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+                linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, 10px 0px;
+            background-color: #f8fafc;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .preview-box .placeholder {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .progress-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1.5rem;
+        }
+        .progress-overlay.visible { display: flex; }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--primary-soft);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .progress-text {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 80%;
+            height: 6px;
+            background: var(--border);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.2s ease;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        button {
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 0.85rem 1.5rem;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: var(--text-main);
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background: #e2e8f0;
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: var(--danger);
+            padding: 0.85rem 1rem;
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: rgba(239, 68, 68, 0.08);
+        }
+
+        .status {
+            padding: 0.9rem 1.1rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-top: 1rem;
+            display: none;
+        }
+        .status.visible { display: block; }
+        .status.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+        .status.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        .status.info {
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+
+        .meta {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            text-align: center;
+            margin-top: 0.75rem;
+        }
+
+        footer {
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="brand-text">BG Remover</div>
+            <p class="subtitle">Remove image backgrounds fully in your browser</p>
+            <a href="../" class="back-link">&larr; Back to tools</a>
+        </header>
+
+        <div class="card">
+            <h2>Upload Image</h2>
+            <div class="dropzone" id="dropzone">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 12V4m0 0L8 8m4-4l4 4" />
+                </svg>
+                <div class="primary-text">Drop an image here or click to browse</div>
+                <div class="secondary-text">PNG, JPG, WebP — up to ~10 MB recommended</div>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+            <div id="status" class="status"></div>
+        </div>
+
+        <div class="card" id="previewCard" style="display:none;">
+            <h2>Preview</h2>
+            <div class="preview-grid">
+                <div class="preview-panel">
+                    <div class="preview-label">Original</div>
+                    <div class="preview-box" id="originalBox">
+                        <div class="placeholder">No image</div>
+                    </div>
+                </div>
+                <div class="preview-panel">
+                    <div class="preview-label">Background Removed</div>
+                    <div class="preview-box" id="resultBox">
+                        <div class="placeholder">Waiting…</div>
+                        <div class="progress-overlay" id="progressOverlay">
+                            <div class="spinner"></div>
+                            <div class="progress-text" id="progressText">Loading model…</div>
+                            <div class="progress-bar"><div class="progress-bar-fill" id="progressFill"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="meta" id="meta"></div>
+            <div class="actions">
+                <button class="btn-primary" id="downloadBtn" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download PNG
+                </button>
+                <button class="btn-secondary" id="newBtn">Process Another</button>
+            </div>
+        </div>
+
+        <footer>
+            Powered by @imgly/background-removal · runs locally in your browser
+        </footer>
+    </div>
+
+    <script type="module">
+        import { removeBackground } from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.8/+esm';
+
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const statusEl = document.getElementById('status');
+        const previewCard = document.getElementById('previewCard');
+        const originalBox = document.getElementById('originalBox');
+        const resultBox = document.getElementById('resultBox');
+        const progressOverlay = document.getElementById('progressOverlay');
+        const progressText = document.getElementById('progressText');
+        const progressFill = document.getElementById('progressFill');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const newBtn = document.getElementById('newBtn');
+        const meta = document.getElementById('meta');
+
+        let currentResultUrl = null;
+        let currentResultName = 'bg-removed.png';
+        let busy = false;
+
+        function setStatus(msg, kind = 'info') {
+            statusEl.textContent = msg;
+            statusEl.className = `status visible ${kind}`;
+        }
+        function clearStatus() {
+            statusEl.className = 'status';
+        }
+
+        function resetResult() {
+            if (currentResultUrl) {
+                URL.revokeObjectURL(currentResultUrl);
+                currentResultUrl = null;
+            }
+            resultBox.innerHTML = '<div class="placeholder">Waiting…</div>';
+            resultBox.appendChild(progressOverlay);
+            downloadBtn.disabled = true;
+            meta.textContent = '';
+        }
+
+        function showProgress(text, pct) {
+            progressOverlay.classList.add('visible');
+            progressText.textContent = text;
+            progressFill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+        }
+        function hideProgress() {
+            progressOverlay.classList.remove('visible');
+        }
+
+        dropzone.addEventListener('click', () => {
+            if (!busy) fileInput.click();
+        });
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (!busy) dropzone.classList.add('dragover');
+        });
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (busy) return;
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+            fileInput.value = '';
+        });
+
+        newBtn.addEventListener('click', () => {
+            if (busy) return;
+            previewCard.style.display = 'none';
+            originalBox.innerHTML = '<div class="placeholder">No image</div>';
+            resetResult();
+            clearStatus();
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            if (!currentResultUrl) return;
+            const a = document.createElement('a');
+            a.href = currentResultUrl;
+            a.download = currentResultName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        });
+
+        async function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                setStatus('That file is not an image.', 'error');
+                return;
+            }
+            busy = true;
+            dropzone.classList.add('disabled');
+            clearStatus();
+            previewCard.style.display = 'block';
+            resetResult();
+
+            const originalUrl = URL.createObjectURL(file);
+            originalBox.innerHTML = '';
+            const origImg = document.createElement('img');
+            origImg.src = originalUrl;
+            originalBox.appendChild(origImg);
+
+            const baseName = file.name.replace(/\.[^.]+$/, '');
+            currentResultName = `${baseName}-nobg.png`;
+
+            showProgress('Loading model…', 0);
+
+            try {
+                const resultBlob = await removeBackground(file, {
+                    progress: (key, current, total) => {
+                        const pct = total ? (current / total) * 100 : 0;
+                        let label = 'Processing…';
+                        if (key.startsWith('fetch:')) label = 'Downloading model…';
+                        else if (key.startsWith('compute:')) label = 'Removing background…';
+                        showProgress(label, pct);
+                    },
+                });
+
+                currentResultUrl = URL.createObjectURL(resultBlob);
+                resultBox.innerHTML = '';
+                const resImg = document.createElement('img');
+                resImg.src = currentResultUrl;
+                resultBox.appendChild(resImg);
+                resultBox.appendChild(progressOverlay);
+                hideProgress();
+                downloadBtn.disabled = false;
+
+                const kb = (resultBlob.size / 1024).toFixed(1);
+                meta.textContent = `Output: ${kb} KB PNG`;
+                setStatus('Background removed. Click Download to save.', 'success');
+            } catch (err) {
+                console.error(err);
+                hideProgress();
+                resultBox.innerHTML = '<div class="placeholder">Failed</div>';
+                resultBox.appendChild(progressOverlay);
+                setStatus(`Error: ${err.message || err}. Try a smaller image or a different browser.`, 'error');
+            } finally {
+                busy = false;
+                dropzone.classList.remove('disabled');
+            }
+        }
+    </script>
+</body>
+</html>
