@@ -274,22 +274,66 @@
                             <label style="display:inline-flex; align-items:center; font-size:12px; font-weight:normal; text-transform:none; margin-top:8px;"><input type="checkbox" v-model="el.alignCenter" style="width:auto; margin-right:5px; margin-bottom:0;"> Center Align Buttons</label>
                         </div>
 
-                        <!-- FAQ -->
-                        <div v-else-if="el.type === 'faq'">
-                            <div v-for="(f, i) in el.items" :key="i" style="background:#fff; border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:4px;">
+                        <!-- Slider -->
+                        <div v-else-if="el.type === 'slider'">
+                            <div v-for="(item, i) in el.items" :key="i" style="background:#fff; border:1px solid #ddd; padding:15px; margin-bottom:15px; border-radius:4px;">
                                 <div class="header-actions" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                                    <label style="margin: 0; font-size: 12px; font-weight: 600; color: #4b5563; text-transform: uppercase;">Question {{i+1}}</label>
-                                    <button class="danger" style="padding: 2px 6px; font-size: 11px;" @click="el.items.splice(i, 1)">Remove</button>
+                                    <label style="margin: 0; font-size: 12px; font-weight: 600; color: #4b5563; text-transform: uppercase;">Slide {{i+1}}</label>
+                                    <button class="danger" style="padding: 2px 6px; font-size: 11px;" @click="el.items.splice(i, 1)">Remove Slide</button>
+                                </div>
+                                <div class="settings-grid" style="margin-bottom:10px;">
+                                    <div class="form-group">
+                                        <label>Image Source (URL)</label>
+                                        <input type="text" v-model="item.src" placeholder="https://...">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Alt Text</label>
+                                        <input type="text" v-model="item.alt" placeholder="Image description">
+                                    </div>
                                 </div>
                                 <div class="form-group">
-                                    <input type="text" v-model="f.q" placeholder="Question?">
+                                    <label>Slide Title (H4)</label>
+                                    <input type="text" v-model="item.title" placeholder="Enter slide title...">
                                 </div>
                                 <div class="form-group" style="margin-bottom:0; background:white;">
-                                    <label>Answer {{i+1}}</label>
-                                    <rich-text-editor v-model="f.a"></rich-text-editor>
+                                    <label>Slide Description (Rich Text)</label>
+                                    <rich-text-editor v-model="item.desc"></rich-text-editor>
                                 </div>
                             </div>
-                            <button class="outline" @click="el.items.push({q:'', a:''})" style="width: 100%;">+ Add FAQ Item</button>
+                            <button class="outline" @click="el.items.push({src:'', alt:'', title:'', desc:''})" style="width: 100%;">+ Add Slide</button>
+                        </div>
+                        
+                        <!-- Cards -->
+                        <div v-else-if="el.type === 'cards'">
+                            <div v-for="(item, i) in el.items" :key="i" style="background:#fff; border:1px solid #ddd; padding:15px; margin-bottom:15px; border-radius:4px;">
+                                <div class="header-actions" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                    <label style="margin: 0; font-size: 12px; font-weight: 600; color: #4b5563; text-transform: uppercase;">Card {{i+1}}</label>
+                                    <button class="danger" style="padding: 2px 6px; font-size: 11px;" @click="el.items.splice(i, 1)">Remove Card</button>
+                                </div>
+                                <div class="settings-grid" style="margin-bottom:10px;">
+                                    <div class="form-group">
+                                        <label>Image Source (URL)</label>
+                                        <input type="text" v-model="item.src" placeholder="https://...">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Alt Text</label>
+                                        <input type="text" v-model="item.alt" placeholder="Image description">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Card Title (H4)</label>
+                                    <input type="text" v-model="item.title" placeholder="Enter card title...">
+                                </div>
+                                <div class="form-group" style="background:white; margin-bottom:10px;">
+                                    <label>Main Description (Rich Text)</label>
+                                    <rich-text-editor v-model="item.desc"></rich-text-editor>
+                                </div>
+                                <div class="form-group" style="background:white; margin-bottom:0;">
+                                    <label>Expanded Content (Rich Text)</label>
+                                    <rich-text-editor v-model="item.expanded"></rich-text-editor>
+                                </div>
+                            </div>
+                            <button class="outline" @click="el.items.push({src:'', alt:'', title:'', desc:'', expanded:''})" style="width: 100%;">+ Add Card</button>
                         </div>
                     </div>
 
@@ -303,8 +347,10 @@
                             <option value="img">Image</option>
                             <option value="btn">Button</option>
                             <option value="btn_group">2 Buttons (Side-by-Side)</option>
-                            <option value="spacer">Spacer</option>
+                             <option value="spacer">Spacer</option>
                             <option value="faq">FAQ</option>
+                            <option value="slider">Slider</option>
+                            <option value="cards">Cards (Grid + Expandable)</option>
                         </select>
                         <button @click="addElement(row)">+ Add</button>
                     </div>
@@ -458,7 +504,9 @@ const app = Vue.createApp({
             const el = { id: Date.now(), type: row.newTypeSelected };
             if(el.type === 'faq') el.items = [{q:'',a:''},{q:'',a:''},{q:'',a:''}];
             if(el.type === 'btn') { el.label = 'Click Here'; el.url = '#'; el.alignCenter = true; }
-            if(el.type === 'btn_group') { el.btn1 = {label: 'Primary Action', url: '#'}; el.btn2 = {label: 'Secondary Action', url: '#'}; el.alignCenter = true; }
+             if(el.type === 'btn_group') { el.btn1 = {label: 'Primary Action', url: '#'}; el.btn2 = {label: 'Secondary Action', url: '#'}; el.alignCenter = true; }
+            if(el.type === 'slider') { el.items = [{src:'', alt:'', title:'Slide Title', desc:'<p>Slide description goes here.</p>'}]; }
+            if(el.type === 'cards') { el.items = [{src:'', alt:'', title:'Card Title', desc:'<p>Visible description.</p>', expanded:'<p>Hidden expanded content.</p>'}]; }
             row.elements.push(el);
         },
         hasImage(row) {
@@ -832,6 +880,47 @@ const app = Vue.createApp({
                 });
                 return html;
             }
+            if(el.type === 'slider') {
+                let slidesHtml = '';
+                el.items.forEach((item, i) => {
+                    slidesHtml += `
+    <div class="slide${i === 0 ? ' active' : ''}">
+      <div class="slide-img">
+        <img src="${item.src || ''}" alt="${item.alt || ''}">
+      </div>
+      <div class="slide-text">
+        <h4>${item.title || ''}</h4>
+        <div class="slide-desc">${item.desc || ''}</div>
+      </div>
+    </div>`;
+                });
+                return `
+<div class="slider-wrapper" id="slider-wrap-${el.id}" data-active="0">
+  <div class="slider-container">
+    <div class="slider-track">
+      ${slidesHtml}
+    </div>
+  </div>
+  <button class="slider-prev" onclick="moveSlider('${el.id}', -1)">&#10094;</button>
+  <button class="slider-next" onclick="moveSlider('${el.id}', 1)">&#10095;</button>
+</div>\n`;
+            }
+            if(el.type === 'cards') {
+                let cardsHtml = '';
+                el.items.forEach(item => {
+                    cardsHtml += `
+    <div class="card">
+      <img src="${item.src || ''}" alt="${item.alt || ''}">
+      <h4>${item.title || ''}</h4>
+      <div class="card-desc">${item.desc || ''}</div>
+      ${item.expanded ? `
+      <button class="expand-toggle" onclick="toggleCard(this)">View details</button>
+      <div class="expand-content">${item.expanded}</div>
+      ` : ''}
+    </div>`;
+                });
+                return `\n<div class="cards-grid">\n${cardsHtml}\n</div>\n`;
+            }
             return '';
         }
     },
@@ -881,6 +970,40 @@ section { padding: 60px 20px; }
 @media (min-width: 768px) {
   .row.grid { grid-template-columns: 1fr 1fr; }
 }
+/* Slider */
+.slider-wrapper { position: relative; max-width: 1200px; margin: 2rem auto; padding: 0 60px; }
+.slider-container { overflow: hidden; }
+.slider-track { display: flex; transition: transform 0.5s ease-in-out; }
+.slide { flex: 0 0 100%; display: flex; align-items: center; gap: 40px; }
+.slide-img { flex: 1; }
+.slide-img img { width: 100%; height: auto; border-radius: 8px; display: block; }
+.slide-text { flex: 1; text-align: left; }
+.slide-text h4 { font-size: 1.5rem; margin: 0 0 1rem; }
+.slide-desc { font-size: 1rem; line-height: 1.6; }
+.slider-prev, .slider-next { position: absolute; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 2.5rem; cursor: pointer; color: #333; padding: 10px; z-index: 10; transition: color 0.2s; line-height: 1; }
+.slider-prev:hover, .slider-next:hover { color: var(--btn-bg); }
+.slider-prev { left: 0; }
+.slider-next { right: 0; }
+
+@media (max-width: 768px) {
+  .slide { flex-direction: column; gap: 20px; }
+  .slider-wrapper { padding: 0 40px; }
+  .slider-prev, .slider-next { font-size: 2rem; }
+}
+
+/* Cards */
+.cards-grid { display: grid; gap: 30px; grid-template-columns: 1fr; margin: 2rem 0; align-items: start; }
+.card { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: transform 0.2s ease; display: flex; flex-direction: column; }
+.card:hover { transform: translateY(-5px); }
+.card img { width: 100%; height: 200px; object-fit: contain; border-radius: 8px; margin-bottom: 1.25rem; }
+.card h4 { margin: 0 0 0.75rem; font-size: 1.25rem; }
+.card-desc { font-size: 0.95rem; line-height: 1.5; margin-bottom: 1rem; flex-grow: 1; }
+.expand-toggle { background: var(--btn-bg); color: var(--btn-text); border: none; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: all 0.2s; align-self: center; }
+.expand-toggle:hover { background: var(--btn-hover-bg); color: var(--btn-hover-text); }
+.expand-content { display: none; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid #eee; font-size: 0.9rem; line-height: 1.6; }
+
+@media (min-width: 640px) { .cards-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .cards-grid { grid-template-columns: repeat(3, 1fr); } }
 </style>\n\n`;
 
             let html = '';
@@ -939,7 +1062,28 @@ section { padding: 60px 20px; }
                 html += `</section>\n\n`;
             });
 
-            return css + html.trim();
+            const script = `
+<script>
+function moveSlider(id, dir) {
+  const wrap = document.getElementById('slider-wrap-' + id);
+  const track = wrap.querySelector('.slider-track');
+  const slides = wrap.querySelectorAll('.slide');
+  let activeIdx = parseInt(wrap.getAttribute('data-active') || 0);
+  
+  activeIdx = (activeIdx + dir + slides.length) % slides.length;
+  wrap.setAttribute('data-active', activeIdx);
+  track.style.transform = "translateX(-" + (activeIdx * 100) + "%)";
+}
+
+function toggleCard(btn) {
+  const content = btn.nextElementSibling;
+  const isVisible = content.style.display === 'block';
+  content.style.display = isVisible ? 'none' : 'block';
+  btn.innerText = isVisible ? 'View details' : 'Hide details';
+}
+<\/script>
+`;
+            return css + html.trim() + script;
         }
     }
 });
