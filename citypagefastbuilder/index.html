@@ -135,6 +135,47 @@
                         <input type="color" v-model="settings.btnHoverBg">
                     </div>
                 </div>
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label>FAQ Icon Color</label>
+                        <input type="color" v-model="settings.faqIconColor">
+                    </div>
+                    <div class="form-group">
+                        <label>Btn Border Radius (px)</label>
+                        <input type="number" v-model.number="settings.btnBorderRadius" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Btn Border Color</label>
+                        <input type="color" v-model="settings.btnBorderColor">
+                    </div>
+                    <div class="form-group">
+                        <label>Btn Border Width (px)</label>
+                        <input type="number" v-model.number="settings.btnBorderWidth" min="0">
+                    </div>
+                </div>
+                <div class="settings-grid">
+                    <div style="grid-column: span 2;"><h4 style="margin: 10px 0 5px; font-size: 13px;">Secondary Button Styles</h4></div>
+                    <div class="form-group">
+                        <label>Sec Button Text Color</label>
+                        <input type="color" v-model="settings.secBtnText">
+                    </div>
+                    <div class="form-group">
+                        <label>Sec Button Background</label>
+                        <input type="color" v-model="settings.secBtnBg">
+                    </div>
+                    <div class="form-group">
+                        <label>Sec Button Hover Text</label>
+                        <input type="color" v-model="settings.secBtnHoverText">
+                    </div>
+                    <div class="form-group">
+                        <label>Sec Button Hover Background</label>
+                        <input type="color" v-model="settings.secBtnHoverBg">
+                    </div>
+                    <div class="form-group">
+                        <label>Sec Button Border Color</label>
+                        <input type="color" v-model="settings.secBtnBorderColor">
+                    </div>
+                </div>
                 </div>
             </div>
 
@@ -234,7 +275,10 @@
                                 <label>Button URL/Link</label>
                                 <input type="text" v-model="el.url" placeholder="/contact-us">
                             </div>
-                            <label style="display:inline-flex; align-items:center; font-size:12px; font-weight:normal; text-transform:none; margin-top:8px;"><input type="checkbox" v-model="el.alignCenter" style="width:auto; margin-right:5px; margin-bottom:0;"> Center Align Button</label>
+                            <div style="display: flex; gap: 15px; margin-top: 8px;">
+                                <label style="display:inline-flex; align-items:center; font-size:12px; font-weight:normal; text-transform:none;"><input type="checkbox" v-model="el.alignCenter" style="width:auto; margin-right:5px; margin-bottom:0;"> Center Align</label>
+                                <label style="display:inline-flex; align-items:center; font-size:12px; font-weight:bold; text-transform:none; color: #4338ca;"><input type="checkbox" v-model="el.isSecondary" style="width:auto; margin-right:5px; margin-bottom:0;"> Use Secondary Style</label>
+                            </div>
                         </div>
 
                         <!-- Spacer -->
@@ -258,6 +302,7 @@
                                         <label>URL</label>
                                         <input type="text" v-model="el.btn1.url" placeholder="/contact">
                                     </div>
+                                    <label style="display:inline-flex; align-items:center; font-size:11px; font-weight:bold; margin-top:8px; color: #4338ca;"><input type="checkbox" v-model="el.btn1.isSecondary" style="width:auto; margin-right:5px; margin-bottom:0;"> Secondary Style</label>
                                 </div>
                                 <div style="flex: 1; background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
                                     <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">Button 2</label>
@@ -269,9 +314,31 @@
                                         <label>URL</label>
                                         <input type="text" v-model="el.btn2.url" placeholder="/about">
                                     </div>
+                                    <label style="display:inline-flex; align-items:center; font-size:11px; font-weight:bold; margin-top:8px; color: #4338ca;"><input type="checkbox" v-model="el.btn2.isSecondary" style="width:auto; margin-right:5px; margin-bottom:0;"> Secondary Style</label>
                                 </div>
                             </div>
-                            <label style="display:inline-flex; align-items:center; font-size:12px; font-weight:normal; text-transform:none; margin-top:8px;"><input type="checkbox" v-model="el.alignCenter" style="width:auto; margin-right:5px; margin-bottom:0;"> Center Align Buttons</label>
+                            <div style="display: flex; gap: 15px; margin-top: 8px;">
+                                <label style="display:inline-flex; align-items:center; font-size:12px; font-weight:normal; text-transform:none;"><input type="checkbox" v-model="el.alignCenter" style="width:auto; margin-right:5px; margin-bottom:0;"> Center Align Buttons</label>
+                            </div>
+                        </div>
+                        
+                        <!-- FAQ -->
+                        <div v-else-if="el.type === 'faq'">
+                            <div v-for="(item, i) in el.items" :key="i" style="background:#fff; border:1px solid #ddd; padding:15px; margin-bottom:15px; border-radius:4px;">
+                                <div class="header-actions" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                    <label style="margin: 0; font-size: 12px; font-weight: 600; color: #4b5563; text-transform: uppercase;">Question {{i+1}}</label>
+                                    <button class="danger" style="padding: 2px 6px; font-size: 11px;" @click="el.items.splice(i, 1)">Remove</button>
+                                </div>
+                                <div class="form-group">
+                                    <label>Question</label>
+                                    <input type="text" v-model="item.q" placeholder="Enter question...">
+                                </div>
+                                <div class="form-group" style="margin-bottom:0; background:white;">
+                                    <label>Answer (Rich Text)</label>
+                                    <rich-text-editor v-model="item.a"></rich-text-editor>
+                                </div>
+                            </div>
+                            <button class="outline" @click="el.items.push({q:'', a:''})" style="width: 100%;">+ Add Question</button>
                         </div>
 
                         <!-- Slider -->
@@ -435,7 +502,16 @@ const app = Vue.createApp({
                 btnText: '#ffffff',
                 btnBg: '#0056b3',
                 btnHoverText: '#ffffff',
-                btnHoverBg: '#004494'
+                btnHoverBg: '#004494',
+                faqIconColor: '#0056b3',
+                btnBorderRadius: 4,
+                btnBorderColor: '#0056b3',
+                btnBorderWidth: 0,
+                secBtnText: '#0056b3',
+                secBtnBg: 'transparent',
+                secBtnHoverText: '#ffffff',
+                secBtnHoverBg: '#0056b3',
+                secBtnBorderColor: '#0056b3'
             },
             sections: []
         };
@@ -503,8 +579,8 @@ const app = Vue.createApp({
             if(!row.newTypeSelected) return;
             const el = { id: Date.now(), type: row.newTypeSelected };
             if(el.type === 'faq') el.items = [{q:'',a:''},{q:'',a:''},{q:'',a:''}];
-            if(el.type === 'btn') { el.label = 'Click Here'; el.url = '#'; el.alignCenter = true; }
-             if(el.type === 'btn_group') { el.btn1 = {label: 'Primary Action', url: '#'}; el.btn2 = {label: 'Secondary Action', url: '#'}; el.alignCenter = true; }
+            if(el.type === 'btn') { el.label = 'Click Here'; el.url = '#'; el.alignCenter = true; el.isSecondary = false; }
+             if(el.type === 'btn_group') { el.btn1 = {label: 'Primary Action', url: '#', isSecondary: false}; el.btn2 = {label: 'Secondary Action', url: '#', isSecondary: false}; el.alignCenter = true; }
             if(el.type === 'slider') { el.items = [{src:'', alt:'', title:'Slide Title', desc:'<p>Slide description goes here.</p>'}]; }
             if(el.type === 'cards') { el.items = [{src:'', alt:'', title:'Card Title', desc:'<p>Visible description.</p>', expanded:'<p>Hidden expanded content.</p>'}]; }
             row.elements.push(el);
@@ -862,12 +938,12 @@ const app = Vue.createApp({
                 return `  <img src="${el.src || ''}" alt="${el.alt || ''}" style="${style}">\n`;
             }
             if(el.type === 'btn') {
-                const btnHtml = `<a href="${el.url || '#'}" class="cta-btn">${el.label || 'Click Here'}</a>`;
+                const btnHtml = `<a href="${el.url || '#'}" class="cta-btn${el.isSecondary ? ' secondary' : ''}">${el.label || 'Click Here'}</a>`;
                 return (el.alignCenter !== false) ? `  <div style="text-align: center;">\n    ${btnHtml}\n  </div>\n` : `  ${btnHtml}\n`;
             }
             if(el.type === 'btn_group') {
-                const btn1Html = `<a href="${el.btn1.url || '#'}" class="cta-btn">${el.btn1.label || 'Button 1'}</a>`;
-                const btn2Html = `<a href="${el.btn2.url || '#'}" class="cta-btn">${el.btn2.label || 'Button 2'}</a>`;
+                const btn1Html = `<a href="${el.btn1.url || '#'}" class="cta-btn${el.btn1.isSecondary ? ' secondary' : ''}">${el.btn1.label || 'Button 1'}</a>`;
+                const btn2Html = `<a href="${el.btn2.url || '#'}" class="cta-btn${el.btn2.isSecondary ? ' secondary' : ''}">${el.btn2.label || 'Button 2'}</a>`;
                 const style = `display: flex; gap: 15px;${el.alignCenter !== false ? ' justify-content: center;' : ''} flex-wrap: wrap; margin-bottom: 1em;`;
                 return `  <div style="${style}">\n    ${btn1Html}\n    ${btn2Html}\n  </div>\n`;
             }
@@ -875,7 +951,7 @@ const app = Vue.createApp({
                 let html = '';
                 el.items.forEach(item => {
                     if(item.q || item.a) {
-                        html += `  <details class="faq-details">\n    <summary class="faq-summary">${item.q}</summary>\n    <div class="faq-content">\n      ${item.a}\n    </div>\n  </details>\n`;
+                        html += `  <details class="faq-details">\n    <summary class="faq-summary"><span>${item.q}</span></summary>\n    <div class="faq-content">\n      ${item.a}\n    </div>\n  </details>\n`;
                     }
                 });
                 return html;
@@ -929,7 +1005,7 @@ const app = Vue.createApp({
             if (this.sections.length === 0) return '<!-- Add a section to generate HTML -->';
 
             // Generate CSS Variables
-            let css = `<style>\n:root {\n  --heading-font: ${this.settings.headingFont};\n  --btn-text: ${this.settings.btnText};\n  --btn-bg: ${this.settings.btnBg};\n  --btn-hover-text: ${this.settings.btnHoverText};\n  --btn-hover-bg: ${this.settings.btnHoverBg};\n}\n
+            let css = `<style>\n:root {\n  --heading-font: ${this.settings.headingFont};\n  --btn-text: ${this.settings.btnText};\n  --btn-bg: ${this.settings.btnBg};\n  --btn-hover-text: ${this.settings.btnHoverText};\n  --btn-hover-bg: ${this.settings.btnHoverBg};\n  --faq-icon-color: ${this.settings.faqIconColor};\n  --btn-border-radius: ${this.settings.btnBorderRadius}px;\n  --btn-border-color: ${this.settings.btnBorderColor};\n  --btn-border-width: ${this.settings.btnBorderWidth}px;\n  --sec-btn-text: ${this.settings.secBtnText};\n  --sec-btn-bg: ${this.settings.secBtnBg};\n  --sec-btn-hover-text: ${this.settings.secBtnHoverText};\n  --sec-btn-hover-bg: ${this.settings.secBtnHoverBg};\n  --sec-btn-border-color: ${this.settings.secBtnBorderColor};\n}\n
 /* Base Styles */
 h1, h2, h3, h4, h5 { font-family: var(--heading-font); }
 h1 { font-size: clamp(1.75rem, 4vw, 2.25rem); /* 28px -> 36px */ margin: 0 0 0.5em; line-height: 1.2; }
@@ -945,7 +1021,8 @@ li { margin-bottom: 0.5em; }
   color: var(--btn-text);
   background: var(--btn-bg);
   text-decoration: none;
-  border-radius: 4px;
+  border-radius: var(--btn-border-radius);
+  border: var(--btn-border-width) solid var(--btn-border-color);
   font-weight: bold;
   transition: all 0.2s ease;
 }
@@ -953,14 +1030,35 @@ li { margin-bottom: 0.5em; }
   color: var(--btn-hover-text);
   background: var(--btn-hover-bg);
 }
+.cta-btn.secondary {
+  color: var(--sec-btn-text);
+  background: var(--sec-btn-bg);
+  border-color: var(--sec-btn-border-color);
+}
+.cta-btn.secondary:hover {
+  color: var(--sec-btn-hover-text);
+  background: var(--sec-btn-hover-bg);
+}
 
 /* FAQ Details */
-.faq-details { border: none !important; margin-bottom: 1.5rem !important; }
+.faq-details { border: 1px solid #e5e7eb !important; margin-bottom: 1rem !important; border-radius: 0 !important; overflow: hidden; }
 .faq-details summary::-webkit-details-marker { display: none !important; }
-.faq-summary { background: #fff !important; padding: 1.25rem 1.5rem !important; border-radius: 12px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important; font-weight: 700 !important; cursor: pointer !important; list-style: none !important; transition: all 0.2s ease !important; position: relative !important; display: block !important; }
-.faq-summary:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 16px rgba(0,0,0,0.08) !important; }
-.faq-details[open] .faq-summary { border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important; }
-.faq-content { background: #fff !important; padding: 1rem 1.5rem 1.5rem !important; border-bottom-left-radius: 12px !important; border-bottom-right-radius: 12px !important; box-shadow: 0 10px 12px -5px rgba(0,0,0,0.05) !important; }
+.faq-summary { background: #fff !important; padding: 1.25rem 1.5rem !important; font-weight: 600 !important; cursor: pointer !important; list-style: none !important; transition: all 0.2s ease !important; position: relative !important; display: flex !important; justify-content: space-between !important; align-items: center !important; }
+.faq-summary:hover { background: #fcfcfc !important; }
+.faq-summary span { flex: 1 !important; }
+.faq-summary::after { 
+  content: '' !important; 
+  width: 10px !important; 
+  height: 10px !important; 
+  border-right: 2px solid var(--faq-icon-color) !important; 
+  border-bottom: 2px solid var(--faq-icon-color) !important; 
+  transform: rotate(45deg) !important; 
+  transition: all 0.3s ease !important; 
+  margin-right: 5px !important;
+  margin-top: -4px !important;
+}
+.faq-details[open] .faq-summary::after { transform: rotate(-135deg) !important; margin-top: 4px !important; }
+.faq-content { background: #f9fafb !important; padding: 1.5rem !important; border-top: 1px solid #e5e7eb !important; }
 
 /* Layout Grid Utilities */
 section { padding: 60px 20px; }
@@ -998,7 +1096,7 @@ section { padding: 60px 20px; }
 .card img { width: 100%; height: 200px; object-fit: contain; border-radius: 8px; margin-bottom: 1.25rem; }
 .card h4 { margin: 0 0 0.75rem; font-size: 1.25rem; }
 .card-desc { font-size: 0.95rem; line-height: 1.5; margin-bottom: 1rem; flex-grow: 1; }
-.expand-toggle { background: var(--btn-bg); color: var(--btn-text); border: none; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: all 0.2s; align-self: center; }
+.expand-toggle { background: var(--btn-bg); color: var(--btn-text); border: var(--btn-border-width) solid var(--btn-border-color); padding: 6px 16px; border-radius: var(--btn-border-radius); cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: all 0.2s; align-self: center; }
 .expand-toggle:hover { background: var(--btn-hover-bg); color: var(--btn-hover-text); }
 .expand-content { display: none; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid #eee; font-size: 0.9rem; line-height: 1.6; }
 
