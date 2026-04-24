@@ -276,6 +276,10 @@
                     <h3 style="margin: 0;">Section {{ sIdx + 1 }}</h3>
                     <div style="display: flex; gap: 5px; align-items: center;">
                         <div class="form-group" style="margin: 0; display: flex; align-items: center; border: 1px solid #ddd; padding: 2px 8px; border-radius: 4px; background: #f9fafb;">
+                            <label style="margin: 0 8px 0 0; font-size: 11px; font-weight: bold; text-transform: uppercase; color: #666;">Class:</label>
+                            <input type="text" v-model="sec.customClass" placeholder="extra-class" style="padding: 2px; font-size: 11px; width: 80px; border: none; background: transparent;">
+                        </div>
+                        <div class="form-group" style="margin: 0; display: flex; align-items: center; border: 1px solid #ddd; padding: 2px 8px; border-radius: 4px; background: #f9fafb;">
                             <label style="margin: 0 8px 0 0; font-size: 11px; font-weight: bold; text-transform: uppercase; color: #666;">Theme:</label>
                             <select v-model="sec.bgType" style="padding: 2px; font-size: 11px; width: 80px; border: none; background: transparent;">
                                 <option value="default">Default</option>
@@ -533,6 +537,9 @@
                         
                         <!-- Cards -->
                         <div v-else-if="el.type === 'cards'">
+                            <div class="form-group">
+                                <label style="display:inline-flex; align-items:center; font-size:12px; font-weight:bold; text-transform:none;"><input type="checkbox" v-model="el.isSlider" style="width:auto; margin-right:5px; margin-bottom:0;"> Display as Slideshow (Slider)</label>
+                            </div>
                             <div v-for="(item, i) in el.items" :key="i" style="background:#fff; border:1px solid #ddd; padding:15px; margin-bottom:15px; border-radius:4px;">
                                 <div class="header-actions" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
                                     <label style="margin: 0; font-size: 12px; font-weight: 600; color: #4b5563; text-transform: uppercase;">Card {{i+1}}</label>
@@ -731,14 +738,14 @@ const app = Vue.createApp({
                 { id: Date.now()+1, type: this.sections.length === 0 ? 'h1' : 'h2', text: 'Section Heading' },
                 { id: Date.now()+2, type: 'p', text: '<p>Section content goes here.</p>' }
             ];
-            this.sections.push({ id: Date.now(), collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, overlayColor: '#000000', overlayOpacity: 0.5, vAlign: 'center', rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
+            this.sections.push({ id: Date.now(), collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, overlayColor: '#000000', overlayOpacity: 0.5, vAlign: 'center', customClass: '', rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
         },
         addFaqSection() {
             let elements = [
                 { id: Date.now()+1, type: 'h2', text: 'Frequently Asked Questions' },
                 { id: Date.now()+2, type: 'faq', items: [{q:'',a:''},{q:'',a:''},{q:'',a:''}] }
             ];
-            this.sections.push({ id: Date.now(), collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, overlayColor: '#000000', overlayOpacity: 0.5, vAlign: 'center', rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
+            this.sections.push({ id: Date.now(), collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, overlayColor: '#000000', overlayOpacity: 0.5, vAlign: 'center', customClass: '', rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
         },
         addReviewSection() {
             let elements = [
@@ -746,7 +753,7 @@ const app = Vue.createApp({
                 { id: Date.now()+2, type: 'embed', code: '<!-- Paste your review widget code here -->' },
                 { id: Date.now()+3, type: 'btn', label: 'View More Reviews', url: '#', alignCenter: true, isSecondary: false }
             ];
-            this.sections.push({ id: Date.now(), collapsed: false, bgType: 'image', customBg: '#ffffff', bgImage: '', bgOverlay: true, overlayColor: '#000000', overlayOpacity: 0.5, vAlign: 'center', rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
+            this.sections.push({ id: Date.now(), collapsed: false, bgType: 'image', customBg: '#ffffff', bgImage: '', bgOverlay: true, overlayColor: '#000000', overlayOpacity: 0.5, vAlign: 'center', customClass: '', rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
         },
         addInfographicSection() {
             let elements = [
@@ -754,7 +761,7 @@ const app = Vue.createApp({
                 { id: Date.now()+2, type: 'p', text: '<p>Optional description goes here.</p>' },
                 { id: Date.now()+3, type: 'btn', label: 'Optional Button', url: '#', alignCenter: true }
             ];
-            this.sections.push({ id: Date.now(), collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, overlayColor: '#000000', overlayOpacity: 0.5, vAlign: 'center', rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: true }] });
+            this.sections.push({ id: Date.now(), collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, overlayColor: '#000000', overlayOpacity: 0.5, vAlign: 'center', customClass: '', rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: true }] });
         },
         addLastSection() {
             let elements = [
@@ -762,7 +769,7 @@ const app = Vue.createApp({
                 { id: Date.now()+2, type: 'p', text: '<p>Contact us today for a free consultation.</p>' },
                 { id: Date.now()+3, type: 'btn', label: 'Call Now', url: '#', alignCenter: true }
             ];
-            this.sections.push({ id: Date.now(), collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, overlayColor: '#000000', overlayOpacity: 0.5, vAlign: 'center', rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
+            this.sections.push({ id: Date.now(), collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, overlayColor: '#000000', overlayOpacity: 0.5, vAlign: 'center', customClass: '', rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
         },
         addRow(sec) {
             sec.rows.push({ id: Date.now(), elements: [], newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false });
@@ -778,7 +785,7 @@ const app = Vue.createApp({
              if(el.type === 'btn_group') { el.btn1 = {label: 'Primary Action', url: '#', isSecondary: false}; el.btn2 = {label: 'Secondary Action', url: '#', isSecondary: false}; el.alignCenter = true; }
             if(el.type === 'img_group') { el.items = [{src:'', alt:'', url:'', newTab:false},{src:'', alt:'', url:'', newTab:false},{src:'', alt:'', url:'', newTab:false},{src:'', alt:'', url:'', newTab:false}]; el.isSlider = false; }
             if(el.type === 'slider') { el.items = [{src:'', alt:'', title:'Slide Title', desc:'<p>Slide description goes here.</p>'}]; }
-            if(el.type === 'cards') { el.items = [{src:'', alt:'', title:'Card Title', desc:'<p>Visible description.</p>', expanded:'<p>Hidden expanded content.</p>'}]; }
+            if(el.type === 'cards') { el.items = [{src:'', alt:'', title:'Card Title', desc:'<p>Visible description.</p>', expanded:'<p>Hidden expanded content.</p>'}]; el.isSlider = false; }
             row.elements.push(el);
         },
         hasImage(row) {
@@ -829,7 +836,20 @@ const app = Vue.createApp({
             const newSections = [];
             const sectionNodes = doc.querySelectorAll('section');
             sectionNodes.forEach((secNode, sIndex) => {
-                const sectionData = { id: Date.now() + sIndex, collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, vAlign: 'center', rows: [] };
+                const sectionData = { id: Date.now() + sIndex, collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, vAlign: 'center', customClass: '', rows: [] };
+                
+                // Parse classes
+                const knownClasses = ['section', 'section-dark', 'section-gray', 'section-image-bg', 'section-overlay'];
+                const classes = Array.from(secNode.classList);
+                sectionData.customClass = classes.filter(c => !knownClasses.includes(c)).join(' ');
+                
+                if (secNode.classList.contains('section-dark')) sectionData.bgType = 'dark';
+                else if (secNode.classList.contains('section-gray')) sectionData.bgType = 'gray';
+                else if (secNode.classList.contains('section-image-bg')) sectionData.bgType = 'image';
+                else if (secNode.style.backgroundColor) {
+                    sectionData.bgType = 'custom';
+                    sectionData.customBg = secNode.style.backgroundColor;
+                }
                 
                 const rowNodes = secNode.querySelectorAll(':scope > .row');
                 rowNodes.forEach((rowNode, rIndex) => {
@@ -869,11 +889,69 @@ const app = Vue.createApp({
                             
                             if (tag === 'h1' || tag === 'h2' || tag === 'h3') {
                                 rowData.elements.push({ id: eId, type: tag, text: elNode.innerText });
-                            } else if (tag === 'p' || tag === 'ul' || tag === 'ol' || tag === 'div') {
-                                // ensure we only parse paragraphs that aren't wrapping box
-                                if(!elNode.classList.contains('box') && !elNode.classList.contains('row')) {
-                                    rowData.elements.push({ id: eId, type: 'p', text: elNode.outerHTML });
-                                }
+                            } else if (tag === 'div' && elNode.classList.contains('cards-slider-wrapper')) {
+                                const cardEl = { id: eId, type: 'cards', isSlider: true, items: [] };
+                                const slides = elNode.querySelectorAll('.slide');
+                                slides.forEach(slide => {
+                                    const img = slide.querySelector('.slide-img img');
+                                    const h4 = slide.querySelector('.slide-text h4');
+                                    const desc = slide.querySelector('.slide-desc');
+                                    const expanded = slide.querySelector('.expand-content, .card-extra-content');
+                                    cardEl.items.push({
+                                        src: img ? img.getAttribute('src') : '',
+                                        alt: img ? img.getAttribute('alt') : '',
+                                        title: h4 ? h4.innerText : '',
+                                        desc: desc ? desc.innerHTML : '',
+                                        expanded: expanded ? expanded.innerHTML : ''
+                                    });
+                                });
+                                rowData.elements.push(cardEl);
+                            } else if (tag === 'div' && elNode.classList.contains('cards-grid')) {
+                                const cardEl = { id: eId, type: 'cards', isSlider: false, items: [] };
+                                const cards = elNode.querySelectorAll('.card');
+                                cards.forEach(card => {
+                                    const img = card.querySelector('img');
+                                    const h4 = card.querySelector('h4');
+                                    const desc = card.querySelector('.card-desc');
+                                    const expanded = card.querySelector('.expand-content');
+                                    cardEl.items.push({
+                                        src: img ? img.getAttribute('src') : '',
+                                        alt: img ? img.getAttribute('alt') : '',
+                                        title: h4 ? h4.innerText : '',
+                                        desc: desc ? desc.innerHTML : '',
+                                        expanded: expanded ? expanded.innerHTML : ''
+                                    });
+                                });
+                                rowData.elements.push(cardEl);
+                            } else if (tag === 'div' && elNode.classList.contains('slider-wrapper') && !elNode.classList.contains('cards-slider-wrapper')) {
+                                const sliderEl = { id: eId, type: 'slider', items: [] };
+                                const slides = elNode.querySelectorAll('.slide');
+                                slides.forEach(slide => {
+                                    const img = slide.querySelector('.slide-img img');
+                                    const h4 = slide.querySelector('.slide-text h4');
+                                    const desc = slide.querySelector('.slide-desc');
+                                    sliderEl.items.push({
+                                        src: img ? img.getAttribute('src') : '',
+                                        alt: img ? img.getAttribute('alt') : '',
+                                        title: h4 ? h4.innerText : '',
+                                        desc: desc ? desc.innerHTML : ''
+                                    });
+                                });
+                                rowData.elements.push(sliderEl);
+                            } else if (tag === 'div' && (elNode.classList.contains('img-group-grid') || elNode.classList.contains('img-group-slider-wrapper'))) {
+                                const imgGroupEl = { id: eId, type: 'img_group', isSlider: elNode.classList.contains('img-group-slider-wrapper'), items: [] };
+                                const items = elNode.querySelectorAll('.img-group-item');
+                                items.forEach(item => {
+                                    const a = item.querySelector('a');
+                                    const img = item.querySelector('img');
+                                    imgGroupEl.items.push({
+                                        src: img ? img.getAttribute('src') : '',
+                                        alt: img ? img.getAttribute('alt') : '',
+                                        url: a ? a.getAttribute('href') : '',
+                                        newTab: a ? a.getAttribute('target') === '_blank' : false
+                                    });
+                                });
+                                rowData.elements.push(imgGroupEl);
                             } else if (tag === 'img') {
                                 rowData.elements.push({ id: eId, type: 'img', src: elNode.getAttribute('src') || '', alt: elNode.getAttribute('alt') || '' });
                             } else if (tag === 'a' && elNode.classList.contains('cta-btn')) {
@@ -890,6 +968,8 @@ const app = Vue.createApp({
                                     q: summary ? summary.innerText : '',
                                     a: p ? p.innerHTML : ''
                                 });
+                            } else if (tag === 'p' || tag === 'ul' || tag === 'ol' || (tag === 'div' && !elNode.className)) {
+                                rowData.elements.push({ id: eId, type: 'p', text: elNode.outerHTML });
                             }
                         });
                     });
@@ -940,7 +1020,7 @@ const app = Vue.createApp({
             let sMatch;
             while ((sMatch = sectionRegex.exec(rawText)) !== null) {
                 const secContent = sMatch[1];
-                const sectionData = { id: Date.now() + Math.random(), collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, vAlign: 'center', rows: [] };
+                const sectionData = { id: Date.now() + Math.random(), collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, vAlign: 'center', customClass: '', rows: [] };
                 
                 const parseInlineElements = (text) => {
                     const els = [];
@@ -1209,9 +1289,35 @@ const app = Vue.createApp({
 </div>\n`;
             }
             if(el.type === 'cards') {
-                let cardsHtml = '';
-                el.items.forEach(item => {
-                    cardsHtml += `
+                if (el.isSlider) {
+                    let slidesHtml = '';
+                    el.items.forEach((item, i) => {
+                        slidesHtml += `
+    <div class="slide${i === 0 ? ' active' : ''}">
+      <div class="slide-img">
+        <img src="${item.src || ''}" alt="${item.alt || ''}">
+      </div>
+      <div class="slide-text">
+        <h4>${item.title || ''}</h4>
+        <div class="slide-desc">${item.desc || ''}</div>
+        ${item.expanded ? `<div class="card-extra-content" style="margin-top:10px; font-size:0.9em; opacity:0.9;">${item.expanded}</div>` : ''}
+      </div>
+    </div>`;
+                    });
+                    return `
+<div class="slider-wrapper cards-slider-wrapper" id="slider-wrap-${el.id}" data-active="0">
+  <div class="slider-container">
+    <div class="slider-track">
+      ${slidesHtml}
+    </div>
+  </div>
+  <button class="slider-prev" onclick="moveSlider('${el.id}', -1)">&#10094;</button>
+  <button class="slider-next" onclick="moveSlider('${el.id}', 1)">&#10095;</button>
+</div>\n`;
+                } else {
+                    let cardsHtml = '';
+                    el.items.forEach(item => {
+                        cardsHtml += `
     <div class="card">
       <img src="${item.src || ''}" alt="${item.alt || ''}">
       <h4>${item.title || ''}</h4>
@@ -1221,8 +1327,9 @@ const app = Vue.createApp({
       <div class="expand-content">${item.expanded}</div>
       ` : ''}
     </div>`;
-                });
-                return `\n<div class="cards-grid">\n${cardsHtml}\n</div>\n`;
+                    });
+                    return `\n<div class="cards-grid">\n${cardsHtml}\n</div>\n`;
+                }
             }
             return '';
         },
@@ -1304,12 +1411,24 @@ li { margin-bottom: 0.5em !important; }
 
 /* Slider */
 .slider-wrapper { position: relative; max-width: 1200px; margin: 2rem auto; padding: 0 60px; }
+.slider-container { overflow: hidden; }
 .slider-track { display: flex; transition: transform 0.5s ease-in-out; }
 .slide { flex: 0 0 100%; display: flex; align-items: center; gap: 40px; }
 .slide-img img { width: 100%; border-radius: 8px; }
 .slider-prev, .slider-next { position: absolute; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 2.5rem; cursor: pointer; color: var(--slider-arrow-color); z-index: 10; transition: color 0.2s; line-height: 1; }
 .slider-prev:hover, .slider-next:hover { color: var(--btn-bg); opacity: 0.8; }
 .slider-prev { left: 0; } .slider-next { right: 0; }
+ 
+/* Slider Mobile Fixes */
+@media (max-width: 768px) {
+  .slider-wrapper { padding: 0 45px !important; }
+  .slide { flex-direction: column !important; align-items: flex-start !important; gap: 20px !important; }
+  .slide-img, .slide-text { flex: 0 0 100% !important; width: 100% !important; }
+}
+
+/* Card Slider Specifics */
+.cards-slider-wrapper .slide-img { flex: 0 0 30% !important; }
+.cards-slider-wrapper .slide-text { flex: 0 0 70% !important; }
 
 /* Cards */
 .cards-grid { display: grid !important; gap: 30px !important; grid-template-columns: 1fr !important; align-items: start !important; margin: 2rem 0 !important; }
@@ -1346,6 +1465,7 @@ li { margin-bottom: 0.5em !important; }
             let htmlContent = '';
             this.sections.forEach(sec => {
                 let sectionClasses = ['section'];
+                if (sec.customClass) sectionClasses.push(sec.customClass);
                 if (sec.bgType === 'dark') sectionClasses.push('section-dark');
                 if (sec.bgType === 'gray') sectionClasses.push('section-gray');
                 if (sec.bgType === 'image') sectionClasses.push('section-image-bg');

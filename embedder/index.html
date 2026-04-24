@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embedder - Responsive Code Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: -0.025em;
+        }
+
+        .subtitle {
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .option-btn {
+            padding: 10px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .option-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .option-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        button.generate {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button.generate:hover {
+            background: var(--primary-hover);
+        }
+
+        .result-area {
+            margin-top: 32px;
+            display: none;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            background: #f1f5f9;
+            resize: none;
+            margin-bottom: 16px;
+        }
+
+        .copy-btn {
+            background: #1e293b;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .copy-btn:hover {
+            background: #0f172a;
+        }
+
+        .preview-label {
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: block;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            color: var(--text-light);
+        }
+
+        .preview-container {
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #eee;
+        }
+
+        /* Responsive Embed Wrapper for the Result */
+        .responsive-embed-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 */
+            height: 0;
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .responsive-embed-container iframe,
+        .responsive-embed-container object,
+        .responsive-embed-container embed {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Embedder</h1>
+        <p class="subtitle">Convert URLs into responsive embed codes instantly.</p>
+    </header>
+
+    <div class="card">
+        <div class="form-group">
+            <label for="url-input">Source URL or Iframe Code</label>
+            <input type="text" id="url-input" placeholder="Paste YouTube, Vimeo, Maps link, or <iframe> tag here...">
+        </div>
+
+        <div class="options-grid">
+            <div class="option-btn active" onclick="setType('auto')">Auto-Detect</div>
+            <div class="option-btn" onclick="setType('youtube')">YouTube</div>
+            <div class="option-btn" onclick="setType('vimeo')">Vimeo</div>
+            <div class="option-btn" onclick="setType('maps')">Google Maps</div>
+            <div class="option-btn" onclick="setType('iframe')">Generic Iframe</div>
+        </div>
+
+        <button class="generate" onclick="generateEmbed()">Generate Embed Code</button>
+
+        <div id="result-area" class="result-area">
+            <div class="result-header">
+                <span class="preview-label">Generated Code</span>
+                <button class="copy-btn" onclick="copyCode()">Copy Code</button>
+            </div>
+            <textarea id="output-code" readonly></textarea>
+
+            <span class="preview-label">Live Preview</span>
+            <div id="preview-box" class="preview-container">
+                <!-- Preview will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <a href="../" class="back-link">&larr; Back to Tools</a>
+</div>
+
+<script>
+    let selectedType = 'auto';
+
+    function setType(type) {
+        selectedType = type;
+        document.querySelectorAll('.option-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.innerText.toLowerCase().includes(type.toLowerCase())) {
+                btn.classList.add('active');
+            }
+        });
+        if (type === 'auto') document.querySelectorAll('.option-btn')[0].classList.add('active');
+    }
+
+    function generateEmbed() {
+        const input = document.getElementById('url-input').value.trim();
+        if (!input) return alert('Mangyaring maglagay ng URL o code, beh!');
+
+        let embedUrl = '';
+        let type = selectedType;
+
+        // Auto-detect logic
+        if (type === 'auto') {
+            if (input.includes('youtube.com') || input.includes('youtu.be')) type = 'youtube';
+            else if (input.includes('vimeo.com')) type = 'vimeo';
+            else if (input.includes('google.com/maps') || input.includes('goo.gl/maps') || input.includes('<iframe')) type = 'iframe';
+            else type = 'iframe';
+        }
+
+        let finalIframe = '';
+
+        if (input.startsWith('<iframe')) {
+            // Extract src from pasted iframe
+            const srcMatch = input.match(/src="([^"]+)"/);
+            if (srcMatch) embedUrl = srcMatch[1];
+            else finalIframe = input; // Just use as is if no src found
+        } else {
+            if (type === 'youtube') {
+                let videoId = '';
+                if (input.includes('v=')) videoId = input.split('v=')[1].split('&')[0];
+                else if (input.includes('youtu.be/')) videoId = input.split('youtu.be/')[1].split('?')[0];
+                else if (input.includes('embed/')) videoId = input.split('embed/')[1].split('?')[0];
+                
+                embedUrl = `https://www.youtube.com/embed/${videoId}`;
+            } else if (type === 'vimeo') {
+                let videoId = input.split('/').pop().split('?')[0];
+                embedUrl = `https://player.vimeo.com/video/${videoId}`;
+            } else {
+                embedUrl = input;
+            }
+        }
+
+        if (!finalIframe) {
+            finalIframe = `<iframe src="${embedUrl}" allowfullscreen></iframe>`;
+        }
+
+        // Wrap in responsive container
+        const result = `<div class="responsive-embed-container">\n  ${finalIframe}\n</div>\n\n<style>\n.responsive-embed-container {\n  position: relative;\n  padding-bottom: 56.25%;\n  height: 0;\n  overflow: hidden;\n  max-width: 100%;\n}\n.responsive-embed-container iframe {\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 100%;\n  height: 100%;\n  border: 0;\n}\n</style>`;
+
+        document.getElementById('output-code').value = result;
+        document.getElementById('preview-box').innerHTML = result;
+        document.getElementById('result-area').style.display = 'block';
+    }
+
+    function copyCode() {
+        const textarea = document.getElementById('output-code');
+        textarea.select();
+        document.execCommand('copy');
+        
+        const btn = document.querySelector('.copy-btn');
+        const originalText = btn.innerText;
+        btn.innerText = 'Copied!';
+        btn.style.background = '#10b981';
+        
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.background = '#1e293b';
+        }, 2000);
+    }
+</script>
+
+</body>
+</html>
