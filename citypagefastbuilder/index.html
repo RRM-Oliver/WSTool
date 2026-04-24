@@ -56,6 +56,7 @@
                     <button class="outline" @click="addStandardSection">+ Standard Section</button>
                     <button class="outline" @click="addFaqSection">+ FAQ Section</button>
                     <button class="outline" @click="addInfographicSection">+ Infographic Section</button>
+                    <button class="outline" @click="addReviewSection">+ Review Section</button>
                     <button class="outline" @click="addLastSection">+ Last Section</button>
                     <button class="outline" @click="showImportModal = true">Import HTML</button>
                     <button class="outline" @click="showShortcodeModal = true">Import Shortcode</button>
@@ -175,6 +176,92 @@
                         <label>Sec Button Border Color</label>
                         <input type="color" v-model="settings.secBtnBorderColor">
                     </div>
+                    <div class="form-group">
+                        <label>Slider Arrow Color</label>
+                        <input type="color" v-model="settings.sliderArrowColor">
+                    </div>
+
+                    <div class="form-group" style="display: flex; gap: 10px;">
+                        <div style="flex: 2;">
+                            <label>Heading Font Family</label>
+                            <input type="text" v-model="settings.headingFont" placeholder="'Montserrat', sans-serif">
+                        </div>
+                        <div style="flex: 1;">
+                            <label>Weight</label>
+                            <input type="number" v-model.number="settings.headingFontWeight" step="100" min="100" max="900">
+                        </div>
+                    </div>
+                    
+                    <!-- H4 Settings -->
+                    <div style="background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 15px;">
+                        <label style="font-weight: bold; font-size: 11px; color: #64748b; text-transform: uppercase;">H4 Specific Settings</label>
+                        <div class="form-group">
+                            <label>H4 Font Family (Optional)</label>
+                            <input type="text" v-model="settings.h4Font" placeholder="inherit">
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label>H4 Size (px)</label>
+                                <input type="number" v-model.number="settings.h4FontSize" placeholder="18">
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Weight</label>
+                                <input type="number" v-model.number="settings.h4FontWeight" step="100" min="100" max="900">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Letter Spacing (px)</label>
+                            <input type="number" v-model.number="settings.h4LetterSpacing" step="0.1">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>FAQ Icon Color</label>
+                        <input type="color" v-model="settings.faqIconColor">
+                    </div>
+                    <div class="form-group">
+                        <label>Btn Font Size (px)</label>
+                        <input type="number" v-model.number="settings.btnFontSize" min="8">
+                    </div>
+                    <div class="form-group">
+                        <label>Btn Letter Spacing (px)</label>
+                        <input type="number" v-model.number="settings.btnLetterSpacing" step="0.1">
+                    </div>
+                    
+                    <div class="form-group" style="display: flex; gap: 10px;">
+                        <div style="flex: 2;">
+                            <label>Btn Font Family</label>
+                            <input type="text" v-model="settings.btnFont" placeholder="'Montserrat', sans-serif">
+                        </div>
+                        <div style="flex: 1;">
+                            <label>Weight</label>
+                            <input type="number" v-model.number="settings.btnFontWeight" step="100" min="100" max="900">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="display: flex; gap: 10px;">
+                        <div style="flex: 2;">
+                            <label>Content Font Family</label>
+                            <input type="text" v-model="settings.contentFont" placeholder="inherit">
+                        </div>
+                        <div style="flex: 1;">
+                            <label>Weight</label>
+                            <input type="number" v-model.number="settings.contentFontWeight" step="100" min="100" max="900">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Content Font Size (px)</label>
+                        <input type="number" v-model.number="settings.contentFontSize" placeholder="16">
+                    </div>
+                    <div class="form-group">
+                        <label>Content Letter Spacing (px)</label>
+                        <input type="number" v-model.number="settings.contentLetterSpacing" step="0.1" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Force Wrap (DIV ID)</label>
+                        <input type="text" v-model="settings.forceWrapId" placeholder="e.g. my-custom-section">
+                    </div>
                 </div>
                 </div>
             </div>
@@ -188,6 +275,34 @@
                 <div class="header-actions">
                     <h3 style="margin: 0;">Section {{ sIdx + 1 }}</h3>
                     <div style="display: flex; gap: 5px; align-items: center;">
+                        <div class="form-group" style="margin: 0; display: flex; align-items: center; border: 1px solid #ddd; padding: 2px 8px; border-radius: 4px; background: #f9fafb;">
+                            <label style="margin: 0 8px 0 0; font-size: 11px; font-weight: bold; text-transform: uppercase; color: #666;">Theme:</label>
+                            <select v-model="sec.bgType" style="padding: 2px; font-size: 11px; width: 80px; border: none; background: transparent;">
+                                <option value="default">Default</option>
+                                <option value="dark">Dark</option>
+                                <option value="gray">Gray</option>
+                                <option value="image">Image</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                            <input type="color" v-if="sec.bgType === 'custom'" v-model="sec.customBg" style="height: 20px; padding: 0; border: none; width: 25px; margin-left: 5px; cursor: pointer; background: transparent;">
+                            <template v-if="sec.bgType === 'image'">
+                                <input type="text" v-model="sec.bgImage" placeholder="Image URL" style="font-size: 10px; width: 100px; margin-left: 5px; padding: 2px;">
+                                <label style="margin: 0 0 0 8px; font-size: 10px; display: flex; align-items: center; text-transform: none; font-weight: normal;"><input type="checkbox" v-model="sec.bgOverlay" style="margin-right: 3px;"> Overlay</label>
+                                <template v-if="sec.bgOverlay">
+                                    <input type="color" v-model="sec.overlayColor" @click.stop style="height: 18px; padding: 0; border: none; width: 22px; margin-left: 5px; cursor: pointer; background: transparent;" title="Overlay Color">
+                                    <input type="range" v-model="sec.overlayOpacity" min="0" max="1" step="0.05" @click.stop style="width: 50px; margin-left: 5px; cursor: pointer;" title="Opacity">
+                                    <span style="font-size: 9px; min-width: 15px; margin-left: 2px; color: #666;">{{sec.overlayOpacity}}</span>
+                                </template>
+                            </template>
+                        </div>
+                        <div class="form-group" style="margin: 0; display: flex; align-items: center; border: 1px solid #ddd; padding: 2px 8px; border-radius: 4px; background: #f9fafb;">
+                            <label style="margin: 0 8px 0 0; font-size: 11px; font-weight: bold; text-transform: uppercase; color: #666;">V-Align:</label>
+                            <select v-model="sec.vAlign" style="padding: 2px; font-size: 11px; width: 70px; border: none; background: transparent;">
+                                <option value="center">Center</option>
+                                <option value="start">Top</option>
+                                <option value="end">Bottom</option>
+                            </select>
+                        </div>
                         <button class="outline" style="padding: 4px 8px; font-size: 12px;" @click="sec.collapsed = !sec.collapsed">
                             {{ sec.collapsed ? 'Expand' : 'Collapse' }}
                         </button>
@@ -252,17 +367,32 @@
                             <rich-text-editor v-model="el.text"></rich-text-editor>
                         </div>
 
+                        <!-- HTML Embed -->
+                        <div v-else-if="el.type === 'embed'">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label>HTML/Embed Code (Scripts allowed)</label>
+                                <textarea v-model="el.code" rows="5" placeholder="<div id='widget'></div>..." style="font-family: monospace; font-size: 12px;"></textarea>
+                            </div>
+                        </div>
+
                         <!-- Image -->
                         <div v-else-if="el.type === 'img'">
                             <div class="form-group">
                                 <label>Image Source (URL)</label>
                                 <input type="text" v-model="el.src" placeholder="https://...">
                             </div>
-                            <div class="form-group" style="margin-bottom:0;">
+                            <div class="form-group">
                                 <label>Alt Text</label>
                                 <input type="text" v-model="el.alt" placeholder="Image description">
                             </div>
-                            <label style="display:inline-flex; align-items:center; font-size:12px; font-weight:normal; text-transform:none; margin-top:8px;"><input type="checkbox" v-model="el.alignCenter" style="width:auto; margin-right:5px; margin-bottom:0;"> Center Align Image</label>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label>Link (Optional)</label>
+                                <input type="text" v-model="el.url" placeholder="https://...">
+                            </div>
+                            <div style="display: flex; gap: 15px; margin-top: 8px;">
+                                <label style="display:inline-flex; align-items:center; font-size:12px; font-weight:normal; text-transform:none;"><input type="checkbox" v-model="el.alignCenter" style="width:auto; margin-right:5px; margin-bottom:0;"> Center Align Image</label>
+                                <label style="display:inline-flex; align-items:center; font-size:12px; font-weight:bold; text-transform:none; color: #4338ca;"><input type="checkbox" v-model="el.newTab" style="width:auto; margin-right:5px; margin-bottom:0;"> New Tab?</label>
+                            </div>
                         </div>
 
                         <!-- Button -->
@@ -341,6 +471,37 @@
                             <button class="outline" @click="el.items.push({q:'', a:''})" style="width: 100%;">+ Add Question</button>
                         </div>
 
+                        <!-- Image Group -->
+                        <div v-else-if="el.type === 'img_group'">
+                            <div class="form-group">
+                                <label style="display:inline-flex; align-items:center; font-size:12px; font-weight:bold; text-transform:none;"><input type="checkbox" v-model="el.isSlider" style="width:auto; margin-right:5px; margin-bottom:0;"> Display as Slider/Carousel</label>
+                            </div>
+                            <div v-for="(item, i) in el.items" :key="i" style="background:#fff; border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:4px;">
+                                <div class="header-actions" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                    <label style="margin: 0; font-size: 11px; font-weight: 600; text-transform:uppercase;">Image {{i+1}}</label>
+                                    <button class="danger" style="padding: 2px 6px; font-size: 11px;" @click="el.items.splice(i, 1)">X</button>
+                                </div>
+                                <div class="settings-grid">
+                                    <div class="form-group">
+                                        <label>Image URL</label>
+                                        <input type="text" v-model="item.src" placeholder="https://...">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Alt Text</label>
+                                        <input type="text" v-model="item.alt" placeholder="Alt text">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Link (Optional)</label>
+                                        <input type="text" v-model="item.url" placeholder="https://...">
+                                    </div>
+                                    <div class="form-group" style="display: flex; align-items: flex-end; padding-bottom: 5px;">
+                                        <label style="display:inline-flex; align-items:center; font-size:11px; font-weight:normal; text-transform:none; margin:0;"><input type="checkbox" v-model="item.newTab" style="width:auto; margin-right:5px; margin-bottom:0;"> New Tab?</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="outline" @click="el.items.push({src:'', alt:''})" style="width: 100%;">+ Add Image</button>
+                        </div>
+                        
                         <!-- Slider -->
                         <div v-else-if="el.type === 'slider'">
                             <div v-for="(item, i) in el.items" :key="i" style="background:#fff; border:1px solid #ddd; padding:15px; margin-bottom:15px; border-radius:4px;">
@@ -416,6 +577,8 @@
                             <option value="btn_group">2 Buttons (Side-by-Side)</option>
                              <option value="spacer">Spacer</option>
                             <option value="faq">FAQ</option>
+                            <option value="embed">HTML Embed</option>
+                            <option value="img_group">Image Group (Logos/Grid)</option>
                             <option value="slider">Slider</option>
                             <option value="cards">Cards (Grid + Expandable)</option>
                         </select>
@@ -498,20 +661,35 @@ const app = Vue.createApp({
             importShortcodeStr: '',
             globalSettingsCollapsed: false,
             settings: {
-                headingFont: "'Inter', sans-serif",
+                headingFont: "'Montserrat', sans-serif",
+                headingFontWeight: 700,
+                faqIconColor: '#000000',
                 btnText: '#ffffff',
-                btnBg: '#0056b3',
+                btnBg: '#000000',
                 btnHoverText: '#ffffff',
-                btnHoverBg: '#004494',
-                faqIconColor: '#0056b3',
+                btnHoverBg: '#333333',
                 btnBorderRadius: 4,
-                btnBorderColor: '#0056b3',
-                btnBorderWidth: 0,
-                secBtnText: '#0056b3',
+                btnBorderColor: '#000000',
+                btnBorderWidth: 1,
+                secBtnText: '#007bff',
                 secBtnBg: 'transparent',
                 secBtnHoverText: '#ffffff',
-                secBtnHoverBg: '#0056b3',
-                secBtnBorderColor: '#0056b3'
+                secBtnHoverBg: '#007bff',
+                secBtnBorderColor: '#007bff',
+                sliderArrowColor: '#333333',
+                btnFontSize: 16,
+                btnLetterSpacing: 0,
+                btnFont: '',
+                btnFontWeight: 700,
+                contentFont: '',
+                contentFontWeight: 400,
+                contentFontSize: '',
+                contentLetterSpacing: '',
+                h4Font: '',
+                h4FontSize: '',
+                h4FontWeight: 700,
+                h4LetterSpacing: '',
+                forceWrapId: ''
             },
             sections: []
         };
@@ -533,6 +711,12 @@ const app = Vue.createApp({
         importShortcodeStr: { handler() { this.saveData(); } }
     },
     methods: {
+        hexToRgba(hex, alpha) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        },
         expandAll() {
             this.sections.forEach(s => s.collapsed = false);
         },
@@ -547,30 +731,38 @@ const app = Vue.createApp({
                 { id: Date.now()+1, type: this.sections.length === 0 ? 'h1' : 'h2', text: 'Section Heading' },
                 { id: Date.now()+2, type: 'p', text: '<p>Section content goes here.</p>' }
             ];
-            this.sections.push({ id: Date.now(), collapsed: false, rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
+            this.sections.push({ id: Date.now(), collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, overlayColor: '#000000', overlayOpacity: 0.5, vAlign: 'center', rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
         },
         addFaqSection() {
             let elements = [
                 { id: Date.now()+1, type: 'h2', text: 'Frequently Asked Questions' },
                 { id: Date.now()+2, type: 'faq', items: [{q:'',a:''},{q:'',a:''},{q:'',a:''}] }
             ];
-            this.sections.push({ id: Date.now(), collapsed: false, rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
+            this.sections.push({ id: Date.now(), collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, overlayColor: '#000000', overlayOpacity: 0.5, vAlign: 'center', rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
+        },
+        addReviewSection() {
+            let elements = [
+                { id: Date.now()+1, type: 'h2', text: 'What Our Clients Say' },
+                { id: Date.now()+2, type: 'embed', code: '<!-- Paste your review widget code here -->' },
+                { id: Date.now()+3, type: 'btn', label: 'View More Reviews', url: '#', alignCenter: true, isSecondary: false }
+            ];
+            this.sections.push({ id: Date.now(), collapsed: false, bgType: 'image', customBg: '#ffffff', bgImage: '', bgOverlay: true, overlayColor: '#000000', overlayOpacity: 0.5, vAlign: 'center', rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
         },
         addInfographicSection() {
             let elements = [
-                { id: Date.now()+1, type: 'img', src: '', alt: 'Infographic', alignCenter: true },
+                { id: Date.now()+1, type: 'h2', text: 'Our Process' },
                 { id: Date.now()+2, type: 'p', text: '<p>Optional description goes here.</p>' },
                 { id: Date.now()+3, type: 'btn', label: 'Optional Button', url: '#', alignCenter: true }
             ];
-            this.sections.push({ id: Date.now(), collapsed: false, rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: true }] });
+            this.sections.push({ id: Date.now(), collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, overlayColor: '#000000', overlayOpacity: 0.5, vAlign: 'center', rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: true }] });
         },
         addLastSection() {
             let elements = [
-                { id: Date.now()+1, type: 'h2', text: 'Ready to get started?' },
+                { id: Date.now()+1, type: 'h2', text: 'Ready to Get Started?' },
                 { id: Date.now()+2, type: 'p', text: '<p>Contact us today for a free consultation.</p>' },
                 { id: Date.now()+3, type: 'btn', label: 'Call Now', url: '#', alignCenter: true }
             ];
-            this.sections.push({ id: Date.now(), collapsed: false, rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
+            this.sections.push({ id: Date.now(), collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, overlayColor: '#000000', overlayOpacity: 0.5, vAlign: 'center', rows: [{ id: Date.now(), elements, newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false }] });
         },
         addRow(sec) {
             sec.rows.push({ id: Date.now(), elements: [], newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false });
@@ -578,9 +770,13 @@ const app = Vue.createApp({
         addElement(row) {
             if(!row.newTypeSelected) return;
             const el = { id: Date.now(), type: row.newTypeSelected };
+            if(el.type === 'p') { el.text = '<p>New paragraph text.</p>'; }
+            if(el.type === 'img') { el.src = ''; el.alt = ''; el.alignCenter = true; el.url = ''; el.newTab = false; }
             if(el.type === 'faq') el.items = [{q:'',a:''},{q:'',a:''},{q:'',a:''}];
+            if(el.type === 'embed') { el.code = '<!-- HTML Embed -->'; }
             if(el.type === 'btn') { el.label = 'Click Here'; el.url = '#'; el.alignCenter = true; el.isSecondary = false; }
              if(el.type === 'btn_group') { el.btn1 = {label: 'Primary Action', url: '#', isSecondary: false}; el.btn2 = {label: 'Secondary Action', url: '#', isSecondary: false}; el.alignCenter = true; }
+            if(el.type === 'img_group') { el.items = [{src:'', alt:'', url:'', newTab:false},{src:'', alt:'', url:'', newTab:false},{src:'', alt:'', url:'', newTab:false},{src:'', alt:'', url:'', newTab:false}]; el.isSlider = false; }
             if(el.type === 'slider') { el.items = [{src:'', alt:'', title:'Slide Title', desc:'<p>Slide description goes here.</p>'}]; }
             if(el.type === 'cards') { el.items = [{src:'', alt:'', title:'Card Title', desc:'<p>Visible description.</p>', expanded:'<p>Hidden expanded content.</p>'}]; }
             row.elements.push(el);
@@ -633,7 +829,7 @@ const app = Vue.createApp({
             const newSections = [];
             const sectionNodes = doc.querySelectorAll('section');
             sectionNodes.forEach((secNode, sIndex) => {
-                const sectionData = { id: Date.now() + sIndex, collapsed: false, rows: [] };
+                const sectionData = { id: Date.now() + sIndex, collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, vAlign: 'center', rows: [] };
                 
                 const rowNodes = secNode.querySelectorAll(':scope > .row');
                 rowNodes.forEach((rowNode, rIndex) => {
@@ -744,7 +940,7 @@ const app = Vue.createApp({
             let sMatch;
             while ((sMatch = sectionRegex.exec(rawText)) !== null) {
                 const secContent = sMatch[1];
-                const sectionData = { id: Date.now() + Math.random(), collapsed: false, rows: [] };
+                const sectionData = { id: Date.now() + Math.random(), collapsed: false, bgType: 'default', customBg: '#ffffff', bgImage: '', bgOverlay: true, vAlign: 'center', rows: [] };
                 
                 const parseInlineElements = (text) => {
                     const els = [];
@@ -935,7 +1131,11 @@ const app = Vue.createApp({
             if(el.type === 'img') {
                 let style = 'max-width: 100%; height: auto;';
                 if(el.alignCenter) style += ' display: block; margin: 0 auto;';
-                return `  <img src="${el.src || ''}" alt="${el.alt || ''}" style="${style}">\n`;
+                let imgHtml = `<img src="${el.src || ''}" alt="${el.alt || ''}" style="${style}">`;
+                if (el.url) {
+                    imgHtml = `<a href="${el.url}" ${el.newTab ? 'target="_blank" rel="noopener"' : ''} style="${el.alignCenter ? 'display: block;' : 'display: inline-block;'}">${imgHtml}</a>`;
+                }
+                return `  <div class="img-el" style="${el.alignCenter ? 'text-align: center;' : ''}">\n    ${imgHtml}\n  </div>\n`;
             }
             if(el.type === 'btn') {
                 const btnHtml = `<a href="${el.url || '#'}" class="cta-btn${el.isSecondary ? ' secondary' : ''}">${el.label || 'Click Here'}</a>`;
@@ -946,6 +1146,33 @@ const app = Vue.createApp({
                 const btn2Html = `<a href="${el.btn2.url || '#'}" class="cta-btn${el.btn2.isSecondary ? ' secondary' : ''}">${el.btn2.label || 'Button 2'}</a>`;
                 const style = `display: flex; gap: 15px;${el.alignCenter !== false ? ' justify-content: center;' : ''} flex-wrap: wrap; margin-bottom: 1em;`;
                 return `  <div style="${style}">\n    ${btn1Html}\n    ${btn2Html}\n  </div>\n`;
+            }
+            if(el.type === 'img_group') {
+                let itemsHtml = '';
+                el.items.forEach(item => {
+                    let imgHtml = `<img src="${item.src || ''}" alt="${item.alt || ''}">`;
+                    if (item.url) {
+                        imgHtml = `<a href="${item.url}" ${item.newTab ? 'target="_blank" rel="noopener"' : ''}>${imgHtml}</a>`;
+                    }
+                    itemsHtml += `<div class="img-group-item"><div class="img-wrapper">${imgHtml}</div></div>`;
+                });
+                if (el.isSlider) {
+                    return `
+<div class="img-group-slider-wrapper" id="slider-wrap-${el.id}" data-active="0">
+  <div class="img-group-container">
+    <div class="img-group-track">
+      ${itemsHtml}
+    </div>
+  </div>
+  <button class="slider-prev" onclick="moveMultiSlider('${el.id}', -1)">&#10094;</button>
+  <button class="slider-next" onclick="moveMultiSlider('${el.id}', 1)">&#10095;</button>
+</div>\n`;
+                } else {
+                    return `\n<div class="img-group-grid">\n  ${itemsHtml}\n</div>\n`;
+                }
+            }
+            if(el.type === 'embed') {
+                return `  <div class="embed-container">\n    ${el.code || ''}\n  </div>\n`;
             }
             if(el.type === 'faq') {
                 let html = '';
@@ -990,7 +1217,7 @@ const app = Vue.createApp({
       <h4>${item.title || ''}</h4>
       <div class="card-desc">${item.desc || ''}</div>
       ${item.expanded ? `
-      <button class="expand-toggle" onclick="toggleCard(this)">View details</button>
+      <a class="expand-toggle" href="javascript:void(0)" onclick="toggleCard(this)">View details</a>
       <div class="expand-content">${item.expanded}</div>
       ` : ''}
     </div>`;
@@ -998,166 +1225,198 @@ const app = Vue.createApp({
                 return `\n<div class="cards-grid">\n${cardsHtml}\n</div>\n`;
             }
             return '';
+        },
+        hexToRgba(hex, alpha) {
+            let r = 0, g = 0, b = 0;
+            if (hex.length === 4) {
+                r = parseInt(hex[1] + hex[1], 16);
+                g = parseInt(hex[2] + hex[2], 16);
+                b = parseInt(hex[3] + hex[3], 16);
+            } else if (hex.length === 7) {
+                r = parseInt(hex.substring(1, 3), 16);
+                g = parseInt(hex.substring(3, 5), 16);
+                b = parseInt(hex.substring(5, 7), 16);
+            }
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
         }
     },
     computed: {
         generatedCode() {
             if (this.sections.length === 0) return '<!-- Add a section to generate HTML -->';
 
-            // Generate CSS Variables
-            let css = `<style>\n:root {\n  --heading-font: ${this.settings.headingFont};\n  --btn-text: ${this.settings.btnText};\n  --btn-bg: ${this.settings.btnBg};\n  --btn-hover-text: ${this.settings.btnHoverText};\n  --btn-hover-bg: ${this.settings.btnHoverBg};\n  --faq-icon-color: ${this.settings.faqIconColor};\n  --btn-border-radius: ${this.settings.btnBorderRadius}px;\n  --btn-border-color: ${this.settings.btnBorderColor};\n  --btn-border-width: ${this.settings.btnBorderWidth}px;\n  --sec-btn-text: ${this.settings.secBtnText};\n  --sec-btn-bg: ${this.settings.secBtnBg};\n  --sec-btn-hover-text: ${this.settings.secBtnHoverText};\n  --sec-btn-hover-bg: ${this.settings.secBtnHoverBg};\n  --sec-btn-border-color: ${this.settings.secBtnBorderColor};\n}\n
+            let cssContent = `:root {\n  --heading-font: ${this.settings.headingFont};\n  --heading-weight: ${this.settings.headingFontWeight || 400};\n  --btn-text: ${this.settings.btnText};\n  --btn-bg: ${this.settings.btnBg};\n  --btn-hover-text: ${this.settings.btnHoverText};\n  --btn-hover-bg: ${this.settings.btnHoverBg};\n  --faq-icon-color: ${this.settings.faqIconColor};\n  --btn-border-radius: ${this.settings.btnBorderRadius}px;\n  --btn-border-color: ${this.settings.btnBorderColor};\n  --btn-border-width: ${this.settings.btnBorderWidth}px;\n  --sec-btn-text: ${this.settings.secBtnText};\n  --sec-btn-bg: ${this.settings.secBtnBg};\n  --sec-btn-hover-text: ${this.settings.secBtnHoverText};\n  --sec-btn-hover-bg: ${this.settings.secBtnHoverBg};\n  --sec-btn-border-color: ${this.settings.secBtnBorderColor};\n  --slider-arrow-color: ${this.settings.sliderArrowColor};\n  --btn-font-size: ${this.settings.btnFontSize}px;\n  --btn-letter-spacing: ${this.settings.btnLetterSpacing}px;\n  --btn-font: ${this.settings.btnFont || 'var(--heading-font)'};\n  --btn-weight: ${this.settings.btnFontWeight || 400};\n  --content-font: ${this.settings.contentFont || 'inherit'};\n  --content-weight: ${this.settings.contentFontWeight || 400};\n  --content-font-size: ${this.settings.contentFontSize ? this.settings.contentFontSize + 'px' : 'clamp(0.95rem, 1.2vw, 1rem)'};\n  --content-letter-spacing: ${this.settings.contentLetterSpacing ? this.settings.contentLetterSpacing + 'px' : 'normal'};\n  --h4-font: ${this.settings.h4Font || 'var(--heading-font)'};\n  --h4-weight: ${this.settings.h4FontWeight || 400};\n  --h4-size: ${this.settings.h4FontSize ? this.settings.h4FontSize + 'px' : 'clamp(1.1rem, 2.5vw, 1.25rem)'};\n  --h4-letter-spacing: ${this.settings.h4LetterSpacing ? this.settings.h4LetterSpacing + 'px' : 'normal'};\n}\n
 /* Base Styles */
-h1, h2, h3, h4, h5 { font-family: var(--heading-font); }
-h1 { font-size: clamp(1.75rem, 4vw, 2.25rem); /* 28px -> 36px */ margin: 0 0 0.5em; line-height: 1.2; }
-h2 { font-size: clamp(1.5rem, 3.5vw, 1.8rem); /* 24px -> 29px */ margin: 0 0 0.5em; line-height: 1.2; }
-h3 { font-size: clamp(1.25rem, 3vw, 1.44rem); /* 20px -> 23px */ margin: 0 0 0.5em; line-height: 1.2; }
-p, ul, ol { font-size: clamp(0.95rem, 1.2vw, 1rem); line-height: 1.6; margin: 0 0 1em; }
-li { margin-bottom: 0.5em; }
+h1, h2, h3, h4, h5 { font-family: var(--heading-font) !important; font-weight: var(--heading-weight) !important; }
+h1 { font-size: clamp(1.75rem, 4vw, 2.25rem) !important; margin: 0 0 0.5em !important; line-height: 1.2 !important; }
+h2 { font-size: clamp(1.5rem, 3.5vw, 1.8rem) !important; margin: 0 0 0.5em !important; line-height: 1.2 !important; }
+h3 { font-size: clamp(1.25rem, 3vw, 1.44rem) !important; margin: 0 0 0.5em !important; line-height: 1.2 !important; }
+h4 { font-family: var(--h4-font) !important; font-size: var(--h4-size) !important; font-weight: var(--h4-weight) !important; letter-spacing: var(--h4-letter-spacing) !important; margin: 0 0 0.5em !important; line-height: 1.2 !important; }
+p, ul, ol, li { font-family: var(--content-font) !important; font-size: var(--content-font-size) !important; font-weight: var(--content-weight) !important; letter-spacing: var(--content-letter-spacing) !important; line-height: 1.6 !important; }
+p, ul, ol { margin: 0 0 1em !important; }
+ul, ol { padding: 0 0 0 25px !important; }
+li { margin-bottom: 0.5em !important; }
+
+/* Layout */
+.section { padding: 80px 0 !important; width: 100% !important; overflow: hidden !important; position: relative !important; }
+.container { max-width: 1200px !important; margin: 0 auto !important; padding: 0 20px !important; }
+.row { margin: 0 auto 40px !important; width: 100% !important; }
+.row::before, .row::after, .container::before, .container::after { content: none !important; display: none !important; }
+.row.grid { display: grid !important; gap: 40px !important; align-items: center !important; }
+.row.grid.v-start { align-items: start !important; }
+.row.grid.v-end { align-items: end !important; }
+.img-el img { box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; }
+
+@media (max-width: 768px) {
+  .row.grid { display: flex !important; flex-direction: column !important; gap: 30px !important; }
+  .col-img { order: -1 !important; }
+  .section { padding: 50px 0 !important; }
+}
 
 /* Components */
 .cta-btn {
-  display: inline-block;
-  padding: 12px 24px;
-  color: var(--btn-text);
-  background: var(--btn-bg);
-  text-decoration: none;
-  border-radius: var(--btn-border-radius);
-  border: var(--btn-border-width) solid var(--btn-border-color);
-  font-weight: bold;
-  transition: all 0.2s ease;
+  display: inline-block !important; padding: 12px 24px !important;
+  font-family: var(--btn-font) !important; font-weight: var(--btn-weight) !important;
+  font-size: var(--btn-font-size) !important; letter-spacing: var(--btn-letter-spacing) !important;
+  color: var(--btn-text) !important; background: var(--btn-bg) !important;
+  text-decoration: none !important; border-radius: var(--btn-border-radius) !important;
+  border: var(--btn-border-width) solid var(--btn-border-color) !important;
+  transition: all 0.2s ease !important;
 }
-.cta-btn:hover {
-  color: var(--btn-hover-text);
-  background: var(--btn-hover-bg);
-}
-.cta-btn.secondary {
-  color: var(--sec-btn-text);
-  background: var(--sec-btn-bg);
-  border-color: var(--sec-btn-border-color);
-}
-.cta-btn.secondary:hover {
-  color: var(--sec-btn-hover-text);
-  background: var(--sec-btn-hover-bg);
-}
+.cta-btn:hover { color: var(--btn-hover-text) !important; background: var(--btn-hover-bg) !important; }
+.cta-btn.secondary { color: var(--sec-btn-text) !important; background: var(--sec-btn-bg) !important; border-color: var(--sec-btn-border-color) !important; }
+.cta-btn.secondary:hover { color: var(--sec-btn-hover-text) !important; background: var(--sec-btn-hover-bg) !important; }
+ 
+/* Section Themes */
+.section-dark { background-color: #000 !important; }
+.section-dark h1, .section-dark h2, .section-dark h3, .section-dark h4, .section-dark h5, .section-dark p, .section-dark li { color: #fff !important; }
+.section-gray { background-color: #EBEBEB !important; }
+.section-image-bg { background-position: center center !important; background-size: cover !important; background-repeat: no-repeat !important; position: relative !important; }
+.section-image-bg .container { position: relative !important; z-index: 2 !important; }
+.section-overlay::before { content: '' !important; position: absolute !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: var(--overlay-bg, rgba(0,0,0,0.5)) !important; z-index: 1 !important; }
+.section-overlay h1, .section-overlay h2, .section-overlay h3, .section-overlay h4, .section-overlay h5, .section-overlay p, .section-overlay li { color: #fff !important; }
 
-/* FAQ Details */
+/* FAQ */
 .faq-details { border: 1px solid #e5e7eb !important; margin-bottom: 1rem !important; border-radius: 0 !important; overflow: hidden; }
-.faq-details summary::-webkit-details-marker { display: none !important; }
-.faq-summary { background: #fff !important; padding: 1.25rem 1.5rem !important; font-weight: 600 !important; cursor: pointer !important; list-style: none !important; transition: all 0.2s ease !important; position: relative !important; display: flex !important; justify-content: space-between !important; align-items: center !important; }
-.faq-summary:hover { background: #fcfcfc !important; }
-.faq-summary span { flex: 1 !important; }
-.faq-summary::after { 
-  content: '' !important; 
-  width: 10px !important; 
-  height: 10px !important; 
-  border-right: 2px solid var(--faq-icon-color) !important; 
-  border-bottom: 2px solid var(--faq-icon-color) !important; 
-  transform: rotate(45deg) !important; 
-  transition: all 0.3s ease !important; 
-  margin-right: 5px !important;
-  margin-top: -4px !important;
-}
+.faq-summary { font-family: var(--heading-font) !important; background: #fff !important; padding: 1.25rem 1.5rem !important; font-weight: 600 !important; cursor: pointer !important; list-style: none !important; display: flex !important; justify-content: space-between !important; align-items: center !important; }
+.faq-summary::after { content: '' !important; width: 10px !important; height: 10px !important; border-right: 2px solid var(--faq-icon-color) !important; border-bottom: 2px solid var(--faq-icon-color) !important; transform: rotate(45deg) !important; transition: all 0.3s ease !important; margin-top: -4px !important; }
 .faq-details[open] .faq-summary::after { transform: rotate(-135deg) !important; margin-top: 4px !important; }
 .faq-content { background: #f9fafb !important; padding: 1.5rem !important; border-top: 1px solid #e5e7eb !important; }
 
-/* Layout Grid Utilities */
-section { padding: 60px 20px; }
-.row { max-width: 1200px; margin: 0 auto; }
-.row.grid { display: grid; gap: 40px; align-items: center; }
-.box img { width: 100%; height: auto; display: block; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-@media (min-width: 768px) {
-  .row.grid { grid-template-columns: 1fr 1fr; }
-}
 /* Slider */
 .slider-wrapper { position: relative; max-width: 1200px; margin: 2rem auto; padding: 0 60px; }
-.slider-container { overflow: hidden; }
 .slider-track { display: flex; transition: transform 0.5s ease-in-out; }
 .slide { flex: 0 0 100%; display: flex; align-items: center; gap: 40px; }
-.slide-img { flex: 1; }
-.slide-img img { width: 100%; height: auto; border-radius: 8px; display: block; }
-.slide-text { flex: 1; text-align: left; }
-.slide-text h4 { font-size: 1.5rem; margin: 0 0 1rem; }
-.slide-desc { font-size: 1rem; line-height: 1.6; }
-.slider-prev, .slider-next { position: absolute; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 2.5rem; cursor: pointer; color: #333; padding: 10px; z-index: 10; transition: color 0.2s; line-height: 1; }
-.slider-prev:hover, .slider-next:hover { color: var(--btn-bg); }
-.slider-prev { left: 0; }
-.slider-next { right: 0; }
-
-@media (max-width: 768px) {
-  .slide { flex-direction: column; gap: 20px; }
-  .slider-wrapper { padding: 0 40px; }
-  .slider-prev, .slider-next { font-size: 2rem; }
-}
+.slide-img img { width: 100%; border-radius: 8px; }
+.slider-prev, .slider-next { position: absolute; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 2.5rem; cursor: pointer; color: var(--slider-arrow-color); z-index: 10; transition: color 0.2s; line-height: 1; }
+.slider-prev:hover, .slider-next:hover { color: var(--btn-bg); opacity: 0.8; }
+.slider-prev { left: 0; } .slider-next { right: 0; }
 
 /* Cards */
-.cards-grid { display: grid; gap: 30px; grid-template-columns: 1fr; margin: 2rem 0; align-items: start; }
-.card { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: transform 0.2s ease; display: flex; flex-direction: column; }
-.card:hover { transform: translateY(-5px); }
-.card img { width: 100%; height: 200px; object-fit: contain; border-radius: 8px; margin-bottom: 1.25rem; }
-.card h4 { margin: 0 0 0.75rem; font-size: 1.25rem; }
-.card-desc { font-size: 0.95rem; line-height: 1.5; margin-bottom: 1rem; flex-grow: 1; }
-.expand-toggle { background: var(--btn-bg); color: var(--btn-text); border: var(--btn-border-width) solid var(--btn-border-color); padding: 6px 16px; border-radius: var(--btn-border-radius); cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: all 0.2s; align-self: center; }
-.expand-toggle:hover { background: var(--btn-hover-bg); color: var(--btn-hover-text); }
-.expand-content { display: none; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid #eee; font-size: 0.9rem; line-height: 1.6; }
+.cards-grid { display: grid !important; gap: 30px !important; grid-template-columns: 1fr !important; align-items: start !important; margin: 2rem 0 !important; }
+@media (min-width: 640px) { .cards-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+@media (min-width: 1024px) { .cards-grid { grid-template-columns: repeat(3, 1fr) !important; } }
+.card { background: #fff !important; border: 1px solid #eee !important; border-radius: 12px !important; padding: 25px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important; transition: transform 0.2s ease !important; display: flex !important; flex-direction: column !important; }
+.card:hover { transform: translateY(-5px) !important; }
+.card img { width: 100% !important; height: 200px !important; object-fit: contain !important; border-radius: 8px !important; margin-bottom: 1.25rem !important; }
+.card h4 { margin: 0 0 0.75rem !important; font-size: 1.25rem !important; }
+.card-desc { font-size: 0.95rem !important; line-height: 1.5 !important; margin-bottom: 1rem !important; flex-grow: 1 !important; }
+.expand-toggle { display: inline-block !important; font-family: var(--btn-font) !important; letter-spacing: var(--btn-letter-spacing) !important; background: var(--btn-bg) !important; color: var(--btn-text) !important; border: var(--btn-border-width) solid var(--btn-border-color) !important; padding: 8px 20px !important; border-radius: var(--btn-border-radius) !important; cursor: pointer !important; font-size: 0.9rem !important; font-weight: bold !important; text-decoration: none !important; transition: all 0.2s ease !important; align-self: center !important; }
+.expand-toggle:hover { background: var(--btn-hover-bg) !important; color: var(--btn-hover-text) !important; border-color: var(--btn-hover-bg) !important; }
+.expand-content { display: none; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid #eee; font-size: 0.9rem !important; line-height: 1.6 !important; }
+
+/* Image Group */
+.img-group-grid { display: grid; gap: 20px; grid-template-columns: repeat(4, 1fr); align-items: center; margin: 2rem 0; }
+.img-wrapper { height: 100px; display: flex; align-items: center; justify-content: center; padding: 10px; }
+.img-wrapper img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+.img-group-slider-wrapper { position: relative; max-width: 1200px; margin: 2rem auto; padding: 0 45px; }
+.img-group-container { overflow: hidden; }
+.img-group-track { display: flex; transition: transform 0.4s ease-in-out; }
+.img-group-item { flex: 0 0 25%; min-width: 0; }
+
+@media (max-width: 768px) {
+  .img-group-grid { grid-template-columns: 1fr !important; }
+  .img-group-item { flex: 0 0 100% !important; }
+}
 
 @media (min-width: 640px) { .cards-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1024px) { .cards-grid { grid-template-columns: repeat(3, 1fr); } }
 </style>\n\n`;
 
-            let html = '';
+            let htmlContent = '';
+            this.sections.forEach(sec => {
+                let sectionClasses = ['section'];
+                if (sec.bgType === 'dark') sectionClasses.push('section-dark');
+                if (sec.bgType === 'gray') sectionClasses.push('section-gray');
+                if (sec.bgType === 'image') sectionClasses.push('section-image-bg');
+                if (sec.bgType === 'image' && sec.bgOverlay) sectionClasses.push('section-overlay');
+                
+                let sectionStyle = '';
+                if (sec.bgType === 'custom' && sec.customBg) sectionStyle += ` background-color: ${sec.customBg} !important;`;
+                if (sec.bgType === 'image' && sec.bgImage) sectionStyle += ` background-image: url('${sec.bgImage}');`;
+                if (sec.bgType === 'image' && sec.bgOverlay) {
+                    const rgba = this.hexToRgba(sec.overlayColor || '#000000', sec.overlayOpacity || 0.5);
+                    sectionStyle += ` --overlay-bg: ${rgba};`;
+                }
+                
+                if (sectionStyle) sectionStyle = ` style="${sectionStyle.trim()}"`;
 
-            this.sections.forEach((sec, sIdx) => {
-                html += `<!-- Section ${sIdx + 1} -->\n`;
-                html += `<section>\n`;
-
+                let rowsHtml = '';
                 sec.rows.forEach(row => {
-                    const isTwoCol = this.hasImage(row) && !row.imgFullRow;
+                    const hasImg = row.elements.some(e => e.type === 'img');
+                    const isGrid = !row.imgFullRow && row.elements.length === 2 && hasImg;
+                    let rowsHtmlContent = '';
                     
-                    if (isTwoCol) {
+                    if (isGrid) {
+                        let rowClasses = ['row', 'grid'];
+                        if (sec.vAlign !== 'center') rowClasses.push(`v-${sec.vAlign}`);
+                        
+                        // Check for image and its settings
+                        const imgIdx = row.elements.findIndex(e => e.type === 'img');
+                        const hasImg = imgIdx !== -1;
+                        
                         let gridStyle = '';
-                        if (row.imgWidth !== '50%') {
+                        if (hasImg) {
+                            const width = row.imgWidth || '50%';
                             if (row.imgPosition === 'left') {
-                                gridStyle = ` style="grid-template-columns: ${row.imgWidth} 1fr;"`;
+                                gridStyle = ` style="grid-template-columns: ${width} 1fr;"`;
                             } else {
-                                gridStyle = ` style="grid-template-columns: 1fr ${row.imgWidth};"`;
+                                gridStyle = ` style="grid-template-columns: 1fr ${width};"`;
                             }
-                        }
-
-                        html += `  <div class="row grid"${gridStyle}>\n`;
-                        
-                        // Separate image and text elements
-                        const imgElements = row.elements.filter(e => e.type === 'img');
-                        const textElements = row.elements.filter(e => e.type !== 'img');
-
-                        const generateImgBox = () => {
-                            let b = `    <div class="box">\n`;
-                            imgElements.forEach(el => { b += `    ` + this.generateElementHtml(el).trim() + `\n`; });
-                            return b + `    </div>\n`;
-                        };
-
-                        const generateTextBox = () => {
-                            let b = `    <div class="box">\n`;
-                            textElements.forEach(el => { b += `    ` + this.generateElementHtml(el).trim() + `\n`; });
-                            return b + `    </div>\n`;
-                        };
-                        
-                        if (row.imgPosition === 'left') {
-                            html += generateImgBox() + generateTextBox();
                         } else {
-                            html += generateTextBox() + generateImgBox();
+                            gridStyle = ' style="grid-template-columns: 1fr 1fr;"';
                         }
+
+                        // Determine which element goes into which column based on imgPosition
+                        let col1El, col2El;
+                        if (hasImg) {
+                            if (row.imgPosition === 'left') {
+                                // Image should be on left (col 1)
+                                // But row.elements might have it at index 0 or 1
+                                col1El = row.elements[imgIdx];
+                                col2El = row.elements[imgIdx === 0 ? 1 : 0];
+                            } else {
+                                // Image should be on right (col 2)
+                                col1El = row.elements[imgIdx === 0 ? 1 : 0];
+                                col2El = row.elements[imgIdx];
+                            }
+                        } else {
+                            col1El = row.elements[0];
+                            col2El = row.elements[1];
+                        }
+
+                        let col1Html = `    <div class="box ${col1El.type === 'img' ? 'col-img' : 'col-text'}">\n    ` + this.generateElementHtml(col1El).trim() + `\n    </div>\n`;
+                        let col2Html = `    <div class="box ${col2El.type === 'img' ? 'col-img' : 'col-text'}">\n    ` + this.generateElementHtml(col2El).trim() + `\n    </div>\n`;
                         
-                        html += `  </div>\n`;
+                        rowsHtml += `  <div class="${rowClasses.join(' ')}"${gridStyle}>\n${col1Html}${col2Html}  </div>\n`;
                     } else {
-                        html += `  <div class="row">\n`;
-                        row.elements.forEach(el => {
-                            html += this.generateElementHtml(el);
-                        });
-                        html += `  </div>\n`;
+                        let elementsHtml = '';
+                        row.elements.forEach(el => { elementsHtml += `    ` + this.generateElementHtml(el).trim() + `\n`; });
+                        rowsHtml += `  <div class="row">\n    <div class="box">\n${elementsHtml}    </div>\n  </div>\n`;
                     }
                 });
-                
-                html += `</section>\n\n`;
+
+                htmlContent += `<section class="${sectionClasses.join(' ')}"${sectionStyle}>\n  <div class="container">\n${rowsHtml}  </div>\n</section>\n\n`;
             });
 
             const script = `
@@ -1179,9 +1438,42 @@ function toggleCard(btn) {
   content.style.display = isVisible ? 'none' : 'block';
   btn.innerText = isVisible ? 'View details' : 'Hide details';
 }
+ 
+function moveMultiSlider(id, dir) {
+  const wrap = document.getElementById('slider-wrap-' + id);
+  const track = wrap.querySelector('.img-group-track');
+  const items = track.children;
+  const isMobile = window.innerWidth <= 768;
+  const visible = isMobile ? 1 : 4;
+  let activeIdx = parseInt(wrap.getAttribute('data-active') || 0);
+  
+  const maxIdx = items.length - visible;
+  activeIdx = Math.max(0, Math.min(activeIdx + dir, maxIdx));
+  
+  wrap.setAttribute('data-active', activeIdx);
+  track.style.transform = "translateX(-" + (activeIdx * (100 / visible)) + "%)";
+}
 <\/script>
 `;
-            return css + html.trim() + script;
+            let finalHtml = htmlContent;
+            // Apply Force Wrap
+            if (this.settings.forceWrapId) {
+                const idPrefix = `#${this.settings.forceWrapId}`;
+                cssContent = cssContent.replace(/(\/\*[\s\S]*?\*\/)|([^\r\n,{}]+)(?=[^}]*\{)/g, (match, p1, p2) => {
+                    if (p1) return p1;
+                    const trimmed = p2.trim();
+                    if (!trimmed || trimmed.startsWith('@') || trimmed.startsWith('from') || trimmed.startsWith('to') || /^\d+/.test(trimmed)) return match;
+                    return p2.split(',').map(s => {
+                        const selector = s.trim();
+                        if (!selector) return s;
+                        if (selector === ':root') return idPrefix;
+                        return idPrefix + ' ' + selector;
+                    }).join(', ');
+                });
+                finalHtml = `<div id="${this.settings.forceWrapId}">\n${htmlContent.trim()}\n</div>`;
+            }
+
+            return `<style>\n${cssContent}\n</style>\n${finalHtml}${script}`;
         }
     }
 });
