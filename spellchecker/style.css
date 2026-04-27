@@ -219,7 +219,7 @@ textarea:focus, input[type="text"]:focus {
 
 .stats-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
 }
 
@@ -305,6 +305,23 @@ textarea:focus, input[type="text"]:focus {
     color: #10b981;
 }
 
+.error-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+.category-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.03);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
 .typo-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -317,11 +334,40 @@ textarea:focus, input[type="text"]:focus {
     border-radius: 16px;
     border: 1px solid rgba(0, 0, 0, 0.05);
     transition: var(--transition);
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
 }
 
 .typo-item:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow);
+}
+
+.typo-item.ignored {
+    opacity: 0.4;
+    filter: grayscale(1);
+}
+
+.ignore-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--text-secondary);
+    opacity: 0;
+    transition: var(--transition);
+    pointer-events: none;
+}
+
+.typo-item.ignored .ignore-overlay {
+    opacity: 1;
 }
 
 .misspelled-word {
@@ -333,6 +379,13 @@ textarea:focus, input[type="text"]:focus {
     font-size: 1.1rem;
 }
 
+.typo-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
 .context-tag {
     display: inline-block;
     font-size: 0.7rem;
@@ -342,7 +395,35 @@ textarea:focus, input[type="text"]:focus {
     background: #f1f5f9;
     color: #475569;
     border-radius: 4px;
-    margin-bottom: 0.5rem;
+}
+
+.line-tag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: rgba(0, 0, 0, 0.05);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+}
+
+.link-error {
+    border-left: 4px solid #f59e0b;
+}
+
+.spelling-error {
+    border-left: 4px solid #ef4444;
+}
+
+.link-code {
+    display: block;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: #f8fafc;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: #64748b;
+    word-break: break-all;
+    border: 1px dashed rgba(0, 0, 0, 0.1);
 }
 
 .context-text {
