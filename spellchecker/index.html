@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulatation - Page Spell Checker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="../index.html" class="back-link">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Tools
+            </a>
+            <h1>Consulatation</h1>
+            <p class="subtitle">Enter URLs to check for spelling errors in all readable content.</p>
+        </header>
+
+        <main class="app-grid">
+            <section class="controls-panel">
+                <div class="card">
+                    <div class="input-group">
+                        <label for="urls">Page URLs (one per line)</label>
+                        <textarea id="urls" rows="6" placeholder="https://example.com&#10;https://example.com/about"></textarea>
+                    </div>
+
+                    <div class="options-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="checkPlaceholders" checked>
+                            <label for="checkPlaceholders">Check Form Placeholders</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="checkAttributes" checked>
+                            <label for="checkAttributes">Check Alt & Title Attributes</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="checkAria" checked>
+                            <label for="checkAria">Check Accessibility (ARIA) Labels</label>
+                        </div>
+                    </div>
+
+                    <div class="tip-box">
+                        <small>💡 Tip: Some sites may block scanning via public proxies. If a fetch fails, try a different URL.</small>
+                    </div>
+
+                    <button id="checkBtn" class="primary-btn">
+                        <span>Check Spelling</span>
+                        <div class="loader hidden" id="btnLoader"></div>
+                    </button>
+                </div>
+
+                <div class="card stats-card hidden" id="statsCard">
+                    <h3>Summary</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">Pages Checked</span>
+                            <span class="stat-value" id="pagesCount">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Errors Found</span>
+                            <span class="stat-value" id="errorsCount">0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="results-panel">
+                <div id="resultsList" class="results-list">
+                    <div class="placeholder-msg">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p>Enter URLs and click check to begin scanning.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/typo-js@1.2.3/typo.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
