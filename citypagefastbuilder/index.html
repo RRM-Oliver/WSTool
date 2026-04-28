@@ -877,7 +877,8 @@ const app = Vue.createApp({
                     sectionData.customBg = secNode.style.backgroundColor;
                 }
                 
-                const rowNodes = secNode.querySelectorAll(':scope > .row');
+                // FIXED: Look for all .row elements within the section (usually inside .container)
+                const rowNodes = secNode.querySelectorAll('.row');
                 rowNodes.forEach((rowNode, rIndex) => {
                     const rowData = { id: Date.now() + 1000 + rIndex, elements: [], newTypeSelected: 'p', imgPosition: 'right', imgWidth: '50%', imgFullRow: false };
                     
@@ -906,18 +907,38 @@ const app = Vue.createApp({
                         }
                     }
                     
-                    const containerNodes = isGrid ? rowNode.querySelectorAll(':scope > .box') : [rowNode];
+                    // FIXED: Always process .box elements if they exist
+                    const containerNodes = rowNode.querySelectorAll(':scope > .box');
+                    const nodesToProcess = containerNodes.length > 0 ? Array.from(containerNodes) : [rowNode];
                     
-                    containerNodes.forEach(cNode => {
+                    nodesToProcess.forEach(cNode => {
                         Array.from(cNode.children).forEach((elNode, eIndex) => {
                             const eId = Date.now() + 2000 + eIndex + Math.random();
                             const tag = elNode.tagName.toLowerCase();
                             
-                            if (tag === 'h1' || tag === 'h2' || tag === 'h3') {
-                                rowData.elements.push({ id: eId, type: tag, text: elNode.innerText });
-                            } else if (tag === 'div' && elNode.classList.contains('cards-slider-wrapper')) {
+                            // IMPROVED: Handle common component wrappers (div.img-el, div[style*="text-align: center"])
+                            let targetNode = elNode;
+                            if (tag === 'div') {
+                                if (elNode.classList.contains('img-el')) {
+                                    const img = elNode.querySelector('img');
+                                    if (img) targetNode = img;
+                                } else if (elNode.style.textAlign === 'center' || !elNode.className) {
+                                    const btn = elNode.querySelector('a.cta-btn');
+                                    if (btn) targetNode = btn;
+                                    else {
+                                        const img = elNode.querySelector('img');
+                                        if (img) targetNode = img;
+                                    }
+                                }
+                            }
+                            
+                            const targetTag = targetNode.tagName.toLowerCase();
+                            
+                            if (targetTag === 'h1' || targetTag === 'h2' || targetTag === 'h3') {
+                                rowData.elements.push({ id: eId, type: targetTag, text: targetNode.innerText, alignCenter: targetNode.style.textAlign === 'center' || elNode.style.textAlign === 'center' });
+                            } else if (targetTag === 'div' && targetNode.classList.contains('cards-slider-wrapper')) {
                                 const cardEl = { id: eId, type: 'cards', isSlider: true, items: [] };
-                                const slides = elNode.querySelectorAll('.slide');
+                                const slides = targetNode.querySelectorAll('.slide');
                                 slides.forEach(slide => {
                                     const img = slide.querySelector('.slide-img img');
                                     const h4 = slide.querySelector('.slide-text h4');
@@ -932,9 +953,9 @@ const app = Vue.createApp({
                                     });
                                 });
                                 rowData.elements.push(cardEl);
-                            } else if (tag === 'div' && elNode.classList.contains('cards-grid')) {
+                            } else if (targetTag === 'div' && targetNode.classList.contains('cards-grid')) {
                                 const cardEl = { id: eId, type: 'cards', isSlider: false, items: [] };
-                                const cards = elNode.querySelectorAll('.card');
+                                const cards = targetNode.querySelectorAll('.card');
                                 cards.forEach(card => {
                                     const img = card.querySelector('img');
                                     const h4 = card.querySelector('h4');
@@ -949,9 +970,9 @@ const app = Vue.createApp({
                                     });
                                 });
                                 rowData.elements.push(cardEl);
-                            } else if (tag === 'div' && elNode.classList.contains('slider-wrapper') && !elNode.classList.contains('cards-slider-wrapper')) {
+                            } else if (targetTag === 'div' && targetNode.classList.contains('slider-wrapper') && !targetNode.classList.contains('cards-slider-wrapper')) {
                                 const sliderEl = { id: eId, type: 'slider', items: [] };
-                                const slides = elNode.querySelectorAll('.slide');
+                                const slides = targetNode.querySelectorAll('.slide');
                                 slides.forEach(slide => {
                                     const img = slide.querySelector('.slide-img img');
                                     const h4 = slide.querySelector('.slide-text h4');
@@ -964,9 +985,9 @@ const app = Vue.createApp({
                                     });
                                 });
                                 rowData.elements.push(sliderEl);
-                            } else if (tag === 'div' && (elNode.classList.contains('img-group-grid') || elNode.classList.contains('img-group-slider-wrapper'))) {
-                                const imgGroupEl = { id: eId, type: 'img_group', isSlider: elNode.classList.contains('img-group-slider-wrapper'), items: [] };
-                                const items = elNode.querySelectorAll('.img-group-item');
+                            } else if (targetTag === 'div' && (targetNode.classList.contains('img-group-grid') || targetNode.classList.contains('img-group-slider-wrapper'))) {
+                                const imgGroupEl = { id: eId, type: 'img_group', isSlider: targetNode.classList.contains('img-group-slider-wrapper'), items: [] };
+                                const items = targetNode.querySelectorAll('.img-group-item');
                                 items.forEach(item => {
                                     const a = item.querySelector('a');
                                     const img = item.querySelector('img');
@@ -978,24 +999,31 @@ const app = Vue.createApp({
                                     });
                                 });
                                 rowData.elements.push(imgGroupEl);
-                            } else if (tag === 'img') {
-                                rowData.elements.push({ id: eId, type: 'img', src: elNode.getAttribute('src') || '', alt: elNode.getAttribute('alt') || '' });
-                            } else if (tag === 'a' && elNode.classList.contains('cta-btn')) {
-                                rowData.elements.push({ id: eId, type: 'btn', label: elNode.innerText, url: elNode.getAttribute('href') || '#' });
-                            } else if (tag === 'details') {
-                                let faqEl = rowData.elements.find(e => e.type === 'faq' && e.items.length < 3);
+                            } else if (targetTag === 'img') {
+                                rowData.elements.push({ id: eId, type: 'img', src: targetNode.getAttribute('src') || '', alt: targetNode.getAttribute('alt') || '', alignCenter: elNode.style.textAlign === 'center' || targetNode.style.display === 'block' });
+                            } else if (targetTag === 'a' && targetNode.classList.contains('cta-btn')) {
+                                rowData.elements.push({ 
+                                    id: eId, 
+                                    type: 'btn', 
+                                    label: targetNode.innerText, 
+                                    url: targetNode.getAttribute('href') || '#',
+                                    isSecondary: targetNode.classList.contains('secondary'),
+                                    alignCenter: elNode.style.textAlign === 'center'
+                                });
+                            } else if (targetTag === 'details') {
+                                let faqEl = rowData.elements.find(e => e.type === 'faq');
                                 if (!faqEl) {
                                     faqEl = { id: Math.random(), type: 'faq', items: [] };
                                     rowData.elements.push(faqEl);
                                 }
-                                const summary = elNode.querySelector('summary');
-                                const p = elNode.querySelector('p');
+                                const summary = targetNode.querySelector('summary');
+                                const p = targetNode.querySelector('.faq-content');
                                 faqEl.items.push({
                                     q: summary ? summary.innerText : '',
                                     a: p ? p.innerHTML : ''
                                 });
-                            } else if (tag === 'p' || tag === 'ul' || tag === 'ol' || (tag === 'div' && !elNode.className)) {
-                                rowData.elements.push({ id: eId, type: 'p', text: elNode.outerHTML });
+                            } else if (targetTag === 'p' || targetTag === 'ul' || targetTag === 'ol' || (targetTag === 'div' && !targetNode.className)) {
+                                rowData.elements.push({ id: eId, type: 'p', text: targetNode.outerHTML });
                             }
                         });
                     });
