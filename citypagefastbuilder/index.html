@@ -477,8 +477,34 @@
 
                         <!-- Image Group -->
                         <div v-else-if="el.type === 'img_group'">
-                            <div class="form-group">
-                                <label style="display:inline-flex; align-items:center; font-size:12px; font-weight:bold; text-transform:none;"><input type="checkbox" v-model="el.isSlider" style="width:auto; margin-right:5px; margin-bottom:0;"> Display as Slider/Carousel</label>
+                            <div class="form-group" style="display: flex; gap: 20px; flex-wrap: wrap; background: #fff; padding: 10px; border-radius: 4px; border: 1px solid #ddd; margin-bottom: 15px;">
+                                <label style="display:inline-flex; align-items:center; font-size:12px; font-weight:bold; text-transform:none; margin: 0;"><input type="checkbox" v-model="el.isSlider" style="width:auto; margin-right:5px; margin-bottom:0;"> Display as Slider</label>
+                                <div v-if="!el.isSlider" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
+                                    <div style="display: flex; gap: 5px; align-items: center;">
+                                        <label style="font-size: 10px; font-weight: bold; margin: 0;">Desk Cols:</label>
+                                        <input type="number" v-model.number="el.columns" min="1" max="12" style="width: 40px; padding: 2px 5px; font-size: 11px;">
+                                    </div>
+                                    <div style="display: flex; gap: 5px; align-items: center;">
+                                        <label style="font-size: 10px; font-weight: bold; margin: 0;">Tab Cols:</label>
+                                        <input type="number" v-model.number="el.columnsTablet" min="1" max="12" style="width: 40px; padding: 2px 5px; font-size: 11px;">
+                                    </div>
+                                    <div style="display: flex; gap: 5px; align-items: center;">
+                                        <label style="font-size: 10px; font-weight: bold; margin: 0;">Mob Cols:</label>
+                                        <input type="number" v-model.number="el.columnsMobile" min="1" max="12" style="width: 40px; padding: 2px 5px; font-size: 11px;">
+                                    </div>
+                                </div>
+                                <div v-if="el.isSlider" style="display: flex; gap: 10px; align-items: center;">
+                                    <label style="font-size: 11px; font-weight: bold; margin: 0;">Items per View (Desktop):</label>
+                                    <input type="number" v-model.number="el.sliderVisible" min="1" max="10" style="width: 50px; padding: 2px 5px; font-size: 11px;">
+                                </div>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <label style="font-size: 11px; font-weight: bold; margin: 0;">Gap (px):</label>
+                                    <input type="number" v-model.number="el.gap" min="0" max="100" style="width: 50px; padding: 2px 5px; font-size: 11px;">
+                                </div>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <label style="font-size: 11px; font-weight: bold; margin: 0;">Img Height:</label>
+                                    <input type="text" v-model="el.imgHeight" placeholder="100px or auto" style="width: 80px; padding: 2px 5px; font-size: 11px;">
+                                </div>
                             </div>
                             <div v-for="(item, i) in el.items" :key="i" style="background:#fff; border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:4px;">
                                 <div class="header-actions" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
@@ -503,7 +529,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <button class="outline" @click="el.items.push({src:'', alt:''})" style="width: 100%;">+ Add Image</button>
+                            <button class="outline" @click="el.items.push({src:'', alt:'', url:'', newTab:false})" style="width: 100%;">+ Add Image</button>
                         </div>
                         
                         <!-- Slider -->
@@ -783,7 +809,7 @@ const app = Vue.createApp({
             if(el.type === 'embed') { el.code = '<!-- HTML Embed -->'; }
             if(el.type === 'btn') { el.label = 'Click Here'; el.url = '#'; el.alignCenter = true; el.isSecondary = false; }
              if(el.type === 'btn_group') { el.btn1 = {label: 'Primary Action', url: '#', isSecondary: false}; el.btn2 = {label: 'Secondary Action', url: '#', isSecondary: false}; el.alignCenter = true; }
-            if(el.type === 'img_group') { el.items = [{src:'', alt:'', url:'', newTab:false},{src:'', alt:'', url:'', newTab:false},{src:'', alt:'', url:'', newTab:false},{src:'', alt:'', url:'', newTab:false}]; el.isSlider = false; }
+            if(el.type === 'img_group') { el.items = [{src:'', alt:'', url:'', newTab:false},{src:'', alt:'', url:'', newTab:false},{src:'', alt:'', url:'', newTab:false},{src:'', alt:'', url:'', newTab:false}]; el.isSlider = false; el.columns = 4; el.columnsTablet = 2; el.columnsMobile = 1; el.sliderVisible = 4; el.gap = 20; el.imgHeight = '100px'; }
             if(el.type === 'slider') { el.items = [{src:'', alt:'', title:'Slide Title', desc:'<p>Slide description goes here.</p>'}]; }
             if(el.type === 'cards') { el.items = [{src:'', alt:'', title:'Card Title', desc:'<p>Visible description.</p>', expanded:'<p>Hidden expanded content.</p>'}]; el.isSlider = false; }
             row.elements.push(el);
@@ -1229,16 +1255,18 @@ const app = Vue.createApp({
             }
             if(el.type === 'img_group') {
                 let itemsHtml = '';
+                const visibleItems = el.sliderVisible || 4;
                 el.items.forEach(item => {
                     let imgHtml = `<img src="${item.src || ''}" alt="${item.alt || ''}">`;
                     if (item.url) {
                         imgHtml = `<a href="${item.url}" ${item.newTab ? 'target="_blank" rel="noopener"' : ''}>${imgHtml}</a>`;
                     }
-                    itemsHtml += `<div class="img-group-item"><div class="img-wrapper">${imgHtml}</div></div>`;
+                    const itemStyle = el.isSlider ? `style="flex: 0 0 ${100/visibleItems}% !important;"` : '';
+                    itemsHtml += `<div class="img-group-item" ${itemStyle}><div class="img-wrapper">${imgHtml}</div></div>`;
                 });
                 if (el.isSlider) {
                     return `
-<div class="img-group-slider-wrapper" id="slider-wrap-${el.id}" data-active="0">
+<div class="img-group-slider-wrapper" id="slider-wrap-${el.id}" data-active="0" data-visible="${visibleItems}">
   <div class="img-group-container">
     <div class="img-group-track">
       ${itemsHtml}
@@ -1248,7 +1276,25 @@ const app = Vue.createApp({
   <button class="slider-next" onclick="moveMultiSlider('${el.id}', 1)">&#10095;</button>
 </div>\n`;
                 } else {
-                    return `\n<div class="img-group-grid">\n  ${itemsHtml}\n</div>\n`;
+                    const id = `img-grid-${el.id}`;
+                    const desktopCols = el.columns || 4;
+                    const tabletCols = el.columnsTablet || 2;
+                    const mobileCols = el.columnsMobile || 1;
+                    const gap = el.gap || 20;
+                    const wrapperHeight = el.imgHeight || '100px';
+
+                    const responsiveStyle = `
+<style>
+  #${id} { display: grid !important; gap: ${gap}px !important; grid-template-columns: repeat(${desktopCols}, 1fr) !important; align-items: center !important; margin: 2rem 0 !important; }
+  #${id} .img-wrapper { height: ${wrapperHeight} !important; }
+  @media (max-width: 991px) {
+    #${id} { grid-template-columns: repeat(${tabletCols}, 1fr) !important; }
+  }
+  @media (max-width: 767px) {
+    #${id} { grid-template-columns: repeat(${mobileCols}, 1fr) !important; gap: ${gap > 15 ? 15 : gap}px !important; }
+  }
+</style>`;
+                    return `${responsiveStyle}\n<div class="img-group-grid" id="${id}">\n  ${itemsHtml}\n</div>\n`;
                 }
             }
             if(el.type === 'embed') {
@@ -1444,17 +1490,17 @@ li { margin-bottom: 0.5em !important; }
 .expand-content { display: none; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid #eee; font-size: 0.9rem !important; line-height: 1.6 !important; }
 
 /* Image Group */
-.img-group-grid { display: grid; gap: 20px; grid-template-columns: repeat(4, 1fr); align-items: center; margin: 2rem 0; }
-.img-wrapper { height: 100px; display: flex; align-items: center; justify-content: center; padding: 10px; }
-.img-wrapper img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.img-group-grid { display: grid !important; gap: 20px; grid-template-columns: repeat(4, 1fr); align-items: center !important; margin: 2rem 0 !important; }
+.img-wrapper { height: 100px; display: flex !important; align-items: center !important; justify-content: center !important; padding: 10px !important; width: 100% !important; box-sizing: border-box !important; }
+.img-wrapper img { max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; width: auto !important; height: auto !important; }
 
-.img-group-slider-wrapper { position: relative; max-width: 1200px; margin: 2rem auto; padding: 0 45px; }
-.img-group-container { overflow: hidden; }
-.img-group-track { display: flex; transition: transform 0.4s ease-in-out; }
-.img-group-item { flex: 0 0 25%; min-width: 0; }
+.img-group-slider-wrapper { position: relative !important; max-width: 1200px !important; margin: 2rem auto !important; padding: 0 45px !important; }
+.img-group-container { overflow: hidden !important; }
+.img-group-track { display: flex !important; transition: transform 0.4s ease-in-out !important; }
+.img-group-item { flex: 0 0 25% !important; min-width: 0 !important; width: 100% !important; }
 
 @media (max-width: 768px) {
-  .img-group-grid { grid-template-columns: 1fr !important; }
+  .img-group-grid { grid-template-columns: 1fr !important; gap: 15px !important; }
   .img-group-item { flex: 0 0 100% !important; }
 }
 
@@ -1564,7 +1610,7 @@ function moveMultiSlider(id, dir) {
   const track = wrap.querySelector('.img-group-track');
   const items = track.children;
   const isMobile = window.innerWidth <= 768;
-  const visible = isMobile ? 1 : 4;
+  const visible = isMobile ? 1 : (parseInt(wrap.getAttribute('data-visible')) || 4);
   let activeIdx = parseInt(wrap.getAttribute('data-active') || 0);
   
   const maxIdx = items.length - visible;
