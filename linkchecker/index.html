@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Down Ba? — Link Checker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --text: #212529;
+    --muted: #6c757d;
+    --border: #e5e7eb;
+    --accent: #4338ca;
+    --green: #16a34a;
+    --red: #dc2626;
+    --amber: #d97706;
+    --blue: #2563eb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 2rem; }
+  h1 { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.025em; }
+  h1 .q { color: var(--accent); }
+  .subtitle { color: var(--muted); margin-top: 0.25rem; }
+  .back { display: inline-block; color: var(--muted); text-decoration: none; font-size: 0.9rem; margin-bottom: 1rem; }
+  .back:hover { color: var(--text); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+  }
+
+  .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .tab {
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--muted);
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  label { display: block; font-size: 0.9rem; font-weight: 500; margin-bottom: 0.5rem; color: var(--text); }
+  textarea, input[type=text] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.9rem;
+    background: #fff;
+    color: var(--text);
+    resize: vertical;
+  }
+  textarea { min-height: 140px; }
+  textarea:focus, input:focus { outline: none; border-color: var(--accent); }
+
+  .options {
+    display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
+    margin-top: 0.75rem; font-size: 0.9rem; color: var(--muted);
+  }
+  .options label { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0; font-weight: 400; }
+
+  .btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 1rem;
+    font-family: inherit;
+  }
+  .btn:hover { background: #3730a3; }
+  .btn:disabled { background: var(--muted); cursor: not-allowed; }
+  .btn.secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
+  .btn.secondary:hover { background: var(--bg); }
+
+  .summary {
+    display: flex; gap: 1.5rem; flex-wrap: wrap;
+    padding: 1rem; background: var(--bg); border-radius: 10px;
+    margin-bottom: 1rem; font-size: 0.95rem;
+  }
+  .summary .stat strong { display: block; font-size: 1.5rem; font-weight: 700; }
+  .summary .stat { color: var(--muted); }
+  .summary .stat.ok strong { color: var(--green); }
+  .summary .stat.bad strong { color: var(--red); }
+  .summary .stat.warn strong { color: var(--amber); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td {
+    text-align: left; padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    word-break: break-all;
+  }
+  th { font-weight: 600; color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  tr:hover td { background: #fafbfc; }
+
+  .badge {
+    display: inline-block; padding: 0.2rem 0.55rem; border-radius: 999px;
+    font-size: 0.8rem; font-weight: 600; white-space: nowrap;
+  }
+  .badge.ok   { background: #dcfce7; color: var(--green); }
+  .badge.bad  { background: #fee2e2; color: var(--red); }
+  .badge.warn { background: #fef3c7; color: var(--amber); }
+  .badge.info { background: #dbeafe; color: var(--blue); }
+  .badge.muted { background: var(--bg); color: var(--muted); }
+
+  .filter-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+  .filter-bar .tab { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+
+  .empty { color: var(--muted); padding: 2rem; text-align: center; }
+  .progress { font-size: 0.9rem; color: var(--muted); margin-top: 0.5rem; }
+
+  a.url { color: var(--blue); text-decoration: none; }
+  a.url:hover { text-decoration: underline; }
+
+  .small { font-size: 0.8rem; color: var(--muted); }
+  .row-actions { display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
+
+  @media (max-width: 640px) {
+    h1 { font-size: 1.75rem; }
+    .card { padding: 1rem; }
+    th:nth-child(3), td:nth-child(3) { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back" href="../">&larr; Back to Tools</a>
+  <header>
+    <h1>Down Ba<span class="q">?</span></h1>
+    <p class="subtitle">Check whether links are alive. Crawl a page to test every link inside.</p>
+  </header>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" data-mode="list">URL List</button>
+      <button class="tab" data-mode="crawl">Crawl Page</button>
+    </div>
+
+    <div id="modeList">
+      <label for="urlList">Paste URLs (one per line)</label>
+      <textarea id="urlList" placeholder="https://example.com&#10;https://google.com&#10;https://this-does-not-exist-xyz.com"></textarea>
+    </div>
+
+    <div id="modeCrawl" style="display:none;">
+      <label for="crawlUrl">Page URL to crawl</label>
+      <input type="text" id="crawlUrl" placeholder="https://example.com">
+      <div class="options">
+        <label><input type="checkbox" id="onlyExternal"> Only external links</label>
+        <label><input type="checkbox" id="includeImages"> Include images (src)</label>
+      </div>
+    </div>
+
+    <div class="options">
+      <label><input type="checkbox" id="followRedirects" checked> Treat 3xx as OK</label>
+      <label>Concurrency
+        <select id="concurrency" style="padding:0.3rem 0.5rem; border:1px solid var(--border); border-radius:6px;">
+          <option value="3">3</option>
+          <option value="5" selected>5</option>
+          <option value="10">10</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="row-actions">
+      <button class="btn" id="runBtn">Check Links</button>
+      <button class="btn secondary" id="stopBtn" disabled>Stop</button>
+      <button class="btn secondary" id="exportBtn" disabled>Export CSV</button>
+      <button class="btn secondary" id="clearBtn">Clear</button>
+    </div>
+    <div class="progress" id="progress"></div>
+  </div>
+
+  <div class="card" id="resultsCard" style="display:none;">
+    <div class="summary" id="summary"></div>
+    <div class="filter-bar" id="filterBar">
+      <button class="tab active" data-filter="all">All</button>
+      <button class="tab" data-filter="ok">OK</button>
+      <button class="tab" data-filter="bad">Broken</button>
+      <button class="tab" data-filter="warn">Warnings</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr><th>#</th><th>URL</th><th>Status</th><th>Detail</th></tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="emptyState" style="display:none;">No results match this filter.</div>
+  </div>
+</div>
+
+<script>
+const PROXIES = [
+  'https://corsproxy.io/?url=',
+  'https://api.allorigins.win/raw?url=',
+  'https://api.codetabs.com/v1/proxy?quest='
+];
+
+const $ = id => document.getElementById(id);
+let mode = 'list';
+let results = [];
+let currentFilter = 'all';
+let abortFlag = false;
+
+document.querySelectorAll('.tabs .tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tabs .tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    mode = t.dataset.mode;
+    $('modeList').style.display   = mode === 'list'  ? '' : 'none';
+    $('modeCrawl').style.display  = mode === 'crawl' ? '' : 'none';
+  });
+});
+
+document.querySelectorAll('#filterBar .tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('#filterBar .tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    currentFilter = t.dataset.filter;
+    renderResults();
+  });
+});
+
+$('runBtn').addEventListener('click', run);
+$('stopBtn').addEventListener('click', () => { abortFlag = true; });
+$('clearBtn').addEventListener('click', () => {
+  $('urlList').value = '';
+  $('crawlUrl').value = '';
+  results = [];
+  $('resultsCard').style.display = 'none';
+  $('progress').textContent = '';
+});
+$('exportBtn').addEventListener('click', exportCsv);
+
+function normalizeUrl(u) {
+  u = (u || '').trim();
+  if (!u) return '';
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  try { return new URL(u).href; } catch { return ''; }
+}
+
+async function run() {
+  abortFlag = false;
+  results = [];
+  $('runBtn').disabled = true;
+  $('stopBtn').disabled = false;
+  $('exportBtn').disabled = true;
+  $('resultsCard').style.display = 'none';
+
+  let urls = [];
+  try {
+    if (mode === 'list') {
+      urls = $('urlList').value.split(/\r?\n/).map(normalizeUrl).filter(Boolean);
+    } else {
+      const target = normalizeUrl($('crawlUrl').value);
+      if (!target) throw new Error('Enter a valid URL to crawl.');
+      $('progress').textContent = 'Fetching page…';
+      urls = await extractLinksFrom(target, {
+        onlyExternal: $('onlyExternal').checked,
+        includeImages: $('includeImages').checked
+      });
+      if (!urls.length) throw new Error('No links found on that page.');
+    }
+  } catch (e) {
+    $('progress').textContent = 'Error: ' + e.message;
+    $('runBtn').disabled = false;
+    $('stopBtn').disabled = true;
+    return;
+  }
+
+  // Dedupe
+  urls = Array.from(new Set(urls));
+
+  results = urls.map(url => ({ url, status: null, label: 'Pending', detail: '' }));
+  $('resultsCard').style.display = '';
+  renderSummary();
+  renderResults();
+
+  const concurrency = parseInt($('concurrency').value, 10) || 5;
+  let done = 0;
+  const total = urls.length;
+
+  async function worker() {
+    while (!abortFlag) {
+      const idx = results.findIndex(r => r.label === 'Pending');
+      if (idx === -1) return;
+      results[idx].label = 'Checking…';
+      const r = await checkUrl(results[idx].url);
+      results[idx] = { url: results[idx].url, ...r };
+      done++;
+      $('progress').textContent = `Checked ${done} / ${total}`;
+      renderSummary();
+      renderResults();
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(concurrency, urls.length) }, worker);
+  await Promise.all(workers);
+
+  $('runBtn').disabled = false;
+  $('stopBtn').disabled = true;
+  $('exportBtn').disabled = results.length === 0;
+  $('progress').textContent = abortFlag ? `Stopped at ${done} / ${total}` : `Done. Checked ${done} / ${total}.`;
+}
+
+async function extractLinksFrom(pageUrl, opts) {
+  const html = await fetchHtml(pageUrl);
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const base = new URL(pageUrl);
+  const out = [];
+  const push = (val) => {
+    if (!val) return;
+    try {
+      const abs = new URL(val, base).href;
+      if (!/^https?:/i.test(abs)) return;
+      if (opts.onlyExternal && new URL(abs).host === base.host) return;
+      out.push(abs);
+    } catch {}
+  };
+  doc.querySelectorAll('a[href]').forEach(a => push(a.getAttribute('href')));
+  if (opts.includeImages) {
+    doc.querySelectorAll('img[src]').forEach(img => push(img.getAttribute('src')));
+  }
+  return out;
+}
+
+async function fetchHtml(url) {
+  let lastErr;
+  for (const p of PROXIES) {
+    try {
+      const res = await fetch(p + encodeURIComponent(url));
+      if (res.ok) return await res.text();
+      lastErr = `Proxy ${p} returned ${res.status}`;
+    } catch (e) { lastErr = e.message; }
+  }
+  throw new Error(lastErr || 'Failed to fetch page');
+}
+
+async function checkUrl(url) {
+  const followRedirects = $('followRedirects').checked;
+  for (const p of PROXIES) {
+    try {
+      const res = await fetch(p + encodeURIComponent(url), { method: 'GET' });
+      const status = res.status;
+      const ok = status >= 200 && status < 300;
+      const redir = status >= 300 && status < 400;
+      if (ok || (redir && followRedirects)) {
+        return { status, label: classify(status), detail: res.statusText || '' };
+      }
+      // Some proxies wrap upstream errors in their own status. If it's 5xx from proxy,
+      // try the next one before giving up.
+      if (status >= 500) continue;
+      return { status, label: classify(status), detail: res.statusText || '' };
+    } catch (e) {
+      // try next proxy
+    }
+  }
+  return { status: 0, label: 'Error', detail: 'Unreachable / blocked' };
+}
+
+function classify(status) {
+  if (status >= 200 && status < 300) return 'OK';
+  if (status >= 300 && status < 400) return 'Redirect';
+  if (status === 401 || status === 403) return 'Forbidden';
+  if (status === 404 || status === 410) return 'Not Found';
+  if (status === 429) return 'Rate Limited';
+  if (status >= 400 && status < 500) return 'Client Error';
+  if (status >= 500) return 'Server Error';
+  return 'Error';
+}
+
+function severityOf(r) {
+  const s = r.status;
+  if (r.label === 'Pending' || r.label === 'Checking…') return 'pending';
+  if (s >= 200 && s < 300) return 'ok';
+  if (s >= 300 && s < 400) return $('followRedirects').checked ? 'ok' : 'warn';
+  if (s === 0) return 'bad';
+  return 'bad';
+}
+
+function renderSummary() {
+  let ok = 0, bad = 0, warn = 0, pending = 0;
+  results.forEach(r => {
+    const sev = severityOf(r);
+    if (sev === 'ok') ok++;
+    else if (sev === 'bad') bad++;
+    else if (sev === 'warn') warn++;
+    else pending++;
+  });
+  $('summary').innerHTML = `
+    <div class="stat"><strong>${results.length}</strong>Total</div>
+    <div class="stat ok"><strong>${ok}</strong>OK</div>
+    <div class="stat bad"><strong>${bad}</strong>Broken</div>
+    <div class="stat warn"><strong>${warn}</strong>Warnings</div>
+    ${pending ? `<div class="stat"><strong>${pending}</strong>Pending</div>` : ''}
+  `;
+}
+
+function renderResults() {
+  const body = $('resultsBody');
+  body.innerHTML = '';
+  let shown = 0;
+  results.forEach((r, i) => {
+    const sev = severityOf(r);
+    if (currentFilter !== 'all' && currentFilter !== sev) return;
+    shown++;
+    const tr = document.createElement('tr');
+    const badgeClass = sev === 'ok' ? 'ok' : sev === 'bad' ? 'bad' : sev === 'warn' ? 'warn' : 'muted';
+    const statusText = r.status ? `${r.status} ${r.label}` : r.label;
+    tr.innerHTML = `
+      <td>${i + 1}</td>
+      <td><a class="url" href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.url)}</a></td>
+      <td><span class="badge ${badgeClass}">${escapeHtml(statusText)}</span></td>
+      <td class="small">${escapeHtml(r.detail || '')}</td>
+    `;
+    body.appendChild(tr);
+  });
+  $('emptyState').style.display = shown === 0 && results.length ? '' : 'none';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function exportCsv() {
+  const rows = [['URL', 'Status', 'Label', 'Detail']];
+  results.forEach(r => rows.push([r.url, r.status || '', r.label, r.detail || '']));
+  const csv = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'down-ba-results.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
