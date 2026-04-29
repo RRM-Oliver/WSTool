@@ -649,28 +649,34 @@ const RichTextEditor = {
         </div>
     `,
     mounted() {
-        this.htmlContent = this.modelValue || '';
+        this.htmlContent = this.cleanHtml(this.modelValue || '');
         this.quill = new Quill(this.$refs.editor, {
             theme: 'snow',
             modules: { toolbar: [ ['bold', 'italic', 'underline'], [{'list':'bullet'}], ['link','clean'] ] }
         });
-        if(this.modelValue) this.quill.root.innerHTML = this.modelValue;
-        this.quill.on('text-change', () => { 
+        if(this.htmlContent) this.quill.root.innerHTML = this.htmlContent;
+        this.quill.on('text-change', () => {
             if(!this.showHtml) {
-                this.htmlContent = this.quill.root.innerHTML;
+                this.htmlContent = this.cleanHtml(this.quill.root.innerHTML);
                 this.$emit('update:modelValue', this.htmlContent);
             }
         });
     },
     watch: {
-        modelValue(val) { 
-            if(val !== this.htmlContent) {
-                this.htmlContent = val || '';
-                if(this.quill && val !== this.quill.root.innerHTML) this.quill.root.innerHTML = this.htmlContent;
+        modelValue(val) {
+            const cleaned = this.cleanHtml(val || '');
+            if(cleaned !== this.htmlContent) {
+                this.htmlContent = cleaned;
+                if(this.quill && cleaned !== this.quill.root.innerHTML) this.quill.root.innerHTML = cleaned;
             }
         }
     },
     methods: {
+        cleanHtml(html) {
+            return (html || '')
+                .replace(/<p\b[^>]*>\s*(<br\s*\/?>)?\s*<\/p>/gi, '')
+                .trim();
+        },
         toggleHtml() {
             this.showHtml = !this.showHtml;
             if(!this.showHtml) {
@@ -919,6 +925,19 @@ const app = Vue.createApp({
                             // IMPROVED: Handle common component wrappers (div.img-el, div[style*="text-align: center"])
                             let targetNode = elNode;
                             if (tag === 'div') {
+                                // Detect btn_group: a div containing 2+ cta-btn anchors (rendered with display: flex)
+                                const ctaBtns = elNode.querySelectorAll(':scope > a.cta-btn');
+                                if (ctaBtns.length >= 2) {
+                                    const a1 = ctaBtns[0], a2 = ctaBtns[1];
+                                    rowData.elements.push({
+                                        id: eId,
+                                        type: 'btn_group',
+                                        btn1: { label: a1.innerText, url: a1.getAttribute('href') || '#', isSecondary: a1.classList.contains('secondary') },
+                                        btn2: { label: a2.innerText, url: a2.getAttribute('href') || '#', isSecondary: a2.classList.contains('secondary') },
+                                        alignCenter: /justify-content:\s*center/.test(elNode.getAttribute('style') || '')
+                                    });
+                                    return;
+                                }
                                 if (elNode.classList.contains('img-el')) {
                                     const img = elNode.querySelector('img');
                                     if (img) targetNode = img;
@@ -1000,7 +1019,27 @@ const app = Vue.createApp({
                                 });
                                 rowData.elements.push(imgGroupEl);
                             } else if (targetTag === 'img') {
-                                rowData.elements.push({ id: eId, type: 'img', src: targetNode.getAttribute('src') || '', alt: targetNode.getAttribute('alt') || '', alignCenter: elNode.style.textAlign === 'center' || targetNode.style.display === 'block' });
+                                const linkAnchor = targetNode.closest('a');
+                                rowData.elements.push({
+                                    id: eId,
+                                    type: 'img',
+                                    src: targetNode.getAttribute('src') || '',
+                                    alt: targetNode.getAttribute('alt') || '',
+                                    alignCenter: elNode.style.textAlign === 'center' || targetNode.style.display === 'block',
+                                    url: linkAnchor ? (linkAnchor.getAttribute('href') || '') : '',
+                                    newTab: linkAnchor ? linkAnchor.getAttribute('target') === '_blank' : false
+                                });
+                            } else if (targetTag === 'a' && targetNode.querySelector('img')) {
+                                const img = targetNode.querySelector('img');
+                                rowData.elements.push({
+                                    id: eId,
+                                    type: 'img',
+                                    src: img.getAttribute('src') || '',
+                                    alt: img.getAttribute('alt') || '',
+                                    alignCenter: elNode.style.textAlign === 'center' || targetNode.style.display === 'block' || img.style.display === 'block',
+                                    url: targetNode.getAttribute('href') || '',
+                                    newTab: targetNode.getAttribute('target') === '_blank'
+                                });
                             } else if (targetTag === 'a' && targetNode.classList.contains('cta-btn')) {
                                 rowData.elements.push({ 
                                     id: eId, 
@@ -1018,9 +1057,23 @@ const app = Vue.createApp({
                                 }
                                 const summary = targetNode.querySelector('summary');
                                 const p = targetNode.querySelector('.faq-content');
+                                let aHtml = p ? p.innerHTML.trim() : '';
+                                aHtml = aHtml.replace(/<p>\s*(<br\s*\/?>)?\s*<\/p>/gi, '').trim();
                                 faqEl.items.push({
-                                    q: summary ? summary.innerText : '',
-                                    a: p ? p.innerHTML : ''
+                                    q: summary ? summary.innerText.trim() : '',
+                                    a: aHtml
+                                });
+                            } else if (targetTag === 'p' && targetNode.querySelector('img') && targetNode.textContent.trim() === '') {
+                                const img = targetNode.querySelector('img');
+                                const linkAnchor = img.closest('a');
+                                rowData.elements.push({
+                                    id: eId,
+                                    type: 'img',
+                                    src: img.getAttribute('src') || '',
+                                    alt: img.getAttribute('alt') || '',
+                                    alignCenter: targetNode.style.textAlign === 'center' || img.style.display === 'block' || (linkAnchor && linkAnchor.style.display === 'block'),
+                                    url: linkAnchor ? (linkAnchor.getAttribute('href') || '') : '',
+                                    newTab: linkAnchor ? linkAnchor.getAttribute('target') === '_blank' : false
                                 });
                             } else if (targetTag === 'p' || targetTag === 'ul' || targetTag === 'ol' || (targetTag === 'div' && !targetNode.className)) {
                                 rowData.elements.push({ id: eId, type: 'p', text: targetNode.outerHTML });
@@ -1332,7 +1385,8 @@ const app = Vue.createApp({
                 let html = '';
                 el.items.forEach(item => {
                     if(item.q || item.a) {
-                        html += `  <details class="faq-details">\n    <summary class="faq-summary"><span>${item.q}</span></summary>\n    <div class="faq-content">\n      ${item.a}\n    </div>\n  </details>\n`;
+                        const cleanA = (item.a || '').replace(/<p>\s*(<br\s*\/?>)?\s*<\/p>/gi, '').trim();
+                        html += `  <details class="faq-details">\n    <summary class="faq-summary"><span>${item.q}</span></summary>\n    <div class="faq-content">\n      ${cleanA}\n    </div>\n  </details>\n`;
                     }
                 });
                 return html;
