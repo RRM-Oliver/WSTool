@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schema Validator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --text: #212529;
+    --muted: #6c757d;
+    --border: #e5e7eb;
+    --accent: #4338ca;
+    --green: #16a34a;
+    --red: #dc2626;
+    --amber: #d97706;
+    --blue: #2563eb;
+    --purple: #7c3aed;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 2rem; }
+  h1 { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.025em; }
+  h1 .q { color: var(--accent); }
+  .subtitle { color: var(--muted); margin-top: 0.25rem; }
+  .back { display: inline-block; color: var(--muted); text-decoration: none; font-size: 0.9rem; margin-bottom: 1rem; }
+  .back:hover { color: var(--text); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+  }
+
+  label { display: block; font-size: 0.9rem; font-weight: 500; margin-bottom: 0.5rem; }
+  textarea, input[type=text] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.9rem;
+    background: #fff;
+    color: var(--text);
+    resize: vertical;
+  }
+  textarea { min-height: 220px; }
+  input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+
+  .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .tab {
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--muted);
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .row { display: flex; gap: 0.75rem; align-items: flex-start; flex-wrap: wrap; }
+  .row > input[type=text] { flex: 1; min-width: 240px; }
+
+  button.primary, button.secondary {
+    padding: 0.75rem 1.25rem;
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.15s;
+  }
+  button.primary { background: var(--accent); color: #fff; }
+  button.primary:hover:not(:disabled) { background: #3730a3; }
+  button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.secondary { background: #fff; color: var(--text); border-color: var(--border); }
+  button.secondary:hover { background: var(--bg); }
+
+  .progress { margin-top: 0.75rem; color: var(--muted); font-size: 0.9rem; }
+
+  .summary { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .pill {
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: #fff;
+  }
+  .pill.green { color: var(--green); border-color: #bbf7d0; background: #f0fdf4; }
+  .pill.red { color: var(--red); border-color: #fecaca; background: #fef2f2; }
+  .pill.amber { color: var(--amber); border-color: #fde68a; background: #fffbeb; }
+  .pill.blue { color: var(--blue); border-color: #bfdbfe; background: #eff6ff; }
+  .pill.purple { color: var(--purple); border-color: #ddd6fe; background: #f5f3ff; }
+
+  .schema-block {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    background: #fff;
+  }
+  .schema-head {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    cursor: pointer;
+    background: #fafafa;
+  }
+  .schema-head:hover { background: #f3f4f6; }
+  .schema-title { font-weight: 600; }
+  .schema-title .badge {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: var(--bg);
+    color: var(--muted);
+  }
+  .schema-body { padding: 1rem 1.25rem; display: none; }
+  .schema-block.open .schema-body { display: block; }
+  .schema-block.open .schema-head .chevron { transform: rotate(90deg); }
+  .chevron {
+    display: inline-block;
+    transition: transform 0.15s;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .issues { margin-bottom: 1rem; }
+  .issue {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+    border: 1px solid var(--border);
+  }
+  .issue.error { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+  .issue.warning { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+  .issue.info { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+  .issue .ico { font-weight: 700; }
+  .issue code { font-family: 'JetBrains Mono', monospace; font-size: 0.85em; padding: 0.05rem 0.3rem; background: rgba(0,0,0,0.06); border-radius: 4px; }
+
+  pre.json {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 1rem;
+    border-radius: 10px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    max-height: 360px;
+    overflow-y: auto;
+  }
+  pre.json .k { color: #93c5fd; }
+  pre.json .s { color: #86efac; }
+  pre.json .n { color: #fca5a5; }
+  pre.json .b { color: #fcd34d; }
+
+  .empty { text-align: center; color: var(--muted); padding: 2rem; }
+
+  .filter-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../" class="back">← Back to tools</a>
+  <header>
+    <h1>Schema Validator <span class="q">✓</span></h1>
+    <p class="subtitle">Inspect a URL or paste markup — find errors, warnings, and duplicate Schema.org structured data.</p>
+  </header>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" data-mode="url">From URL</button>
+      <button class="tab" data-mode="code">Paste Code</button>
+    </div>
+
+    <div id="modeUrl">
+      <label for="urlInput">Page URL</label>
+      <div class="row">
+        <input type="text" id="urlInput" placeholder="https://example.com/page" />
+        <button class="primary" id="runBtn">Validate</button>
+        <button class="secondary" id="clearBtn">Clear</button>
+      </div>
+    </div>
+
+    <div id="modeCode" style="display:none;">
+      <label for="codeInput">HTML or JSON-LD</label>
+      <textarea id="codeInput" placeholder="Paste full HTML, or a single JSON-LD &lt;script&gt; block, or raw JSON-LD…"></textarea>
+      <div style="margin-top: 0.75rem;" class="row">
+        <button class="primary" id="runBtnCode">Validate</button>
+        <button class="secondary" id="clearBtnCode">Clear</button>
+      </div>
+    </div>
+
+    <div class="progress" id="progress"></div>
+  </div>
+
+  <div class="card" id="resultsCard" style="display:none;">
+    <div id="schemaList"></div>
+  </div>
+
+  <div class="card" id="summaryCard" style="display:none;">
+    <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:0.75rem;">Summary &amp; Issues</h2>
+    <div class="summary" id="summary"></div>
+    <div id="globalIssues" class="issues"></div>
+  </div>
+</div>
+
+<script>
+const PROXIES = [
+  'https://corsproxy.io/?url=',
+  'https://api.allorigins.win/raw?url=',
+  'https://api.codetabs.com/v1/proxy?quest='
+];
+
+const $ = id => document.getElementById(id);
+let mode = 'url';
+
+document.querySelectorAll('.tabs .tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tabs .tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    mode = t.dataset.mode;
+    $('modeUrl').style.display = mode === 'url' ? '' : 'none';
+    $('modeCode').style.display = mode === 'code' ? '' : 'none';
+  });
+});
+
+$('runBtn').addEventListener('click', runUrl);
+$('runBtnCode').addEventListener('click', runCode);
+$('clearBtn').addEventListener('click', () => { $('urlInput').value = ''; reset(); });
+$('clearBtnCode').addEventListener('click', () => { $('codeInput').value = ''; reset(); });
+$('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') runUrl(); });
+
+function reset() {
+  $('resultsCard').style.display = 'none';
+  $('summaryCard').style.display = 'none';
+  $('progress').textContent = '';
+  $('summary').innerHTML = '';
+  $('globalIssues').innerHTML = '';
+  $('schemaList').innerHTML = '';
+}
+
+function normalizeUrl(u) {
+  u = (u || '').trim();
+  if (!u) return '';
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  try { return new URL(u).href; } catch { return ''; }
+}
+
+async function fetchHtml(url) {
+  let lastErr;
+  for (const p of PROXIES) {
+    try {
+      const res = await fetch(p + encodeURIComponent(url));
+      if (res.ok) return await res.text();
+      lastErr = `Proxy ${p} returned ${res.status}`;
+    } catch (e) { lastErr = e.message; }
+  }
+  throw new Error(lastErr || 'Failed to fetch page');
+}
+
+async function runUrl() {
+  reset();
+  const url = normalizeUrl($('urlInput').value);
+  if (!url) { $('progress').textContent = 'Enter a valid URL.'; return; }
+  $('runBtn').disabled = true;
+  $('progress').textContent = 'Fetching page…';
+  try {
+    const html = await fetchHtml(url);
+    $('progress').textContent = 'Parsing structured data…';
+    analyze(html, url);
+    $('progress').textContent = '';
+  } catch (e) {
+    $('progress').textContent = 'Error: ' + e.message;
+  } finally {
+    $('runBtn').disabled = false;
+  }
+}
+
+function runCode() {
+  reset();
+  const txt = $('codeInput').value.trim();
+  if (!txt) { $('progress').textContent = 'Paste some markup or JSON.'; return; }
+  // Heuristic: if it looks like raw JSON, wrap it; if it looks like HTML, parse it
+  let html = txt;
+  if (txt.startsWith('{') || txt.startsWith('[')) {
+    html = `<html><head><script type="application/ld+json">${txt}<\/script></head></html>`;
+  } else if (!/<html|<head|<body|<script/i.test(txt)) {
+    // Treat as JSON-LD content
+    html = `<html><head><script type="application/ld+json">${txt}<\/script></head></html>`;
+  }
+  analyze(html, null);
+}
+
+// Required / recommended fields per common Schema.org type.
+// Recommended-fields = warnings; missing @context / @type / parse fail = errors.
+const RULES = {
+  Article:           { required: ['headline'], recommended: ['author', 'datePublished', 'image', 'publisher'] },
+  NewsArticle:       { required: ['headline'], recommended: ['author', 'datePublished', 'image', 'publisher', 'dateModified'] },
+  BlogPosting:       { required: ['headline'], recommended: ['author', 'datePublished', 'image'] },
+  Product:           { required: ['name'], recommended: ['image', 'description', 'offers', 'brand', 'sku'] },
+  Offer:             { required: ['price', 'priceCurrency'], recommended: ['availability', 'url'] },
+  Review:            { required: ['reviewRating'], recommended: ['author', 'itemReviewed', 'datePublished'] },
+  AggregateRating:   { required: ['ratingValue'], recommended: ['reviewCount', 'ratingCount', 'bestRating'] },
+  Organization:      { required: ['name'], recommended: ['url', 'logo', 'sameAs', 'contactPoint'] },
+  LocalBusiness:     { required: ['name', 'address'], recommended: ['telephone', 'openingHours', 'image', 'url', 'priceRange', 'geo'] },
+  Restaurant:        { required: ['name', 'address'], recommended: ['telephone', 'servesCuisine', 'priceRange', 'openingHours'] },
+  Person:            { required: ['name'], recommended: ['url', 'image', 'jobTitle'] },
+  Event:             { required: ['name', 'startDate', 'location'], recommended: ['endDate', 'description', 'image', 'offers'] },
+  Recipe:            { required: ['name', 'recipeIngredient', 'recipeInstructions'], recommended: ['image', 'author', 'totalTime', 'recipeYield'] },
+  VideoObject:       { required: ['name', 'thumbnailUrl', 'uploadDate'], recommended: ['description', 'duration', 'contentUrl'] },
+  ImageObject:       { required: ['contentUrl'], recommended: ['url', 'caption', 'creator'] },
+  BreadcrumbList:    { required: ['itemListElement'], recommended: [] },
+  ListItem:          { required: ['position'], recommended: ['name', 'item'] },
+  FAQPage:           { required: ['mainEntity'], recommended: [] },
+  Question:          { required: ['name', 'acceptedAnswer'], recommended: [] },
+  Answer:            { required: ['text'], recommended: [] },
+  HowTo:             { required: ['name', 'step'], recommended: ['image', 'totalTime'] },
+  WebSite:           { required: ['name', 'url'], recommended: ['potentialAction'] },
+  WebPage:           { required: [], recommended: ['name', 'url', 'description'] },
+  PostalAddress:     { required: ['streetAddress'], recommended: ['addressLocality', 'addressRegion', 'postalCode', 'addressCountry'] },
+  ContactPoint:      { required: ['contactType'], recommended: ['telephone', 'email', 'areaServed'] },
+  JobPosting:        { required: ['title', 'description', 'datePosted', 'hiringOrganization'], recommended: ['jobLocation', 'employmentType', 'baseSalary', 'validThrough'] },
+  Service:           { required: ['name'], recommended: ['provider', 'areaServed', 'description'] },
+};
+
+// Common Google rich-result expectations
+function specialChecks(type, obj, issues) {
+  if (type === 'Product') {
+    if (obj.offers) {
+      const offers = Array.isArray(obj.offers) ? obj.offers : [obj.offers];
+      offers.forEach((o, i) => {
+        if (typeof o !== 'object') return;
+        if (!o.price && !o.lowPrice) issues.push({ level: 'warning', msg: `<code>offers[${i}]</code>: missing <code>price</code> or <code>lowPrice</code>` });
+        if (!o.priceCurrency) issues.push({ level: 'warning', msg: `<code>offers[${i}]</code>: missing <code>priceCurrency</code>` });
+      });
+    }
+  }
+  if (type === 'AggregateRating') {
+    if (!obj.reviewCount && !obj.ratingCount) {
+      issues.push({ level: 'warning', msg: 'Provide either <code>reviewCount</code> or <code>ratingCount</code>' });
+    }
+  }
+  if (type === 'BreadcrumbList' && Array.isArray(obj.itemListElement)) {
+    const positions = obj.itemListElement.map(x => x && x.position).filter(p => p != null);
+    const dupes = positions.filter((p,i) => positions.indexOf(p) !== i);
+    if (dupes.length) issues.push({ level: 'error', msg: `Duplicate <code>position</code> values: ${[...new Set(dupes)].join(', ')}` });
+  }
+  if (type === 'ImageObject' && !obj.contentUrl && obj.url) {
+    issues.push({ level: 'info', msg: 'Using <code>url</code> instead of <code>contentUrl</code> — both work but <code>contentUrl</code> is preferred.' });
+  }
+}
+
+function getTypes(obj) {
+  if (!obj || typeof obj !== 'object') return [];
+  let t = obj['@type'];
+  if (!t) return [];
+  return Array.isArray(t) ? t : [t];
+}
+
+function validateNode(obj, path, allIssues) {
+  if (!obj || typeof obj !== 'object') return;
+  const types = getTypes(obj);
+  for (const t of types) {
+    const rule = RULES[t];
+    if (rule) {
+      for (const f of rule.required) {
+        if (obj[f] == null || obj[f] === '') {
+          allIssues.push({ level: 'error', msg: `<strong>${t}</strong>${path ? ' at ' + path : ''}: missing required field <code>${f}</code>` });
+        }
+      }
+      for (const f of rule.recommended) {
+        if (obj[f] == null || obj[f] === '') {
+          allIssues.push({ level: 'warning', msg: `<strong>${t}</strong>${path ? ' at ' + path : ''}: missing recommended field <code>${f}</code>` });
+        }
+      }
+      specialChecks(t, obj, allIssues);
+    } else if (typeof t === 'string') {
+      allIssues.push({ level: 'info', msg: `Type <code>${t}</code>${path ? ' at ' + path : ''}: no rich-result rules registered — verify against schema.org/${t}` });
+    }
+  }
+  // Recurse into nested objects/arrays
+  for (const [k, v] of Object.entries(obj)) {
+    if (k.startsWith('@')) continue;
+    const sub = path ? `${path}.${k}` : k;
+    if (Array.isArray(v)) {
+      v.forEach((it, i) => { if (it && typeof it === 'object') validateNode(it, `${sub}[${i}]`, allIssues); });
+    } else if (v && typeof v === 'object') {
+      validateNode(v, sub, allIssues);
+    }
+  }
+}
+
+function validateSchema(parsed) {
+  const issues = [];
+  if (!parsed || typeof parsed !== 'object') {
+    issues.push({ level: 'error', msg: 'JSON-LD must be a JSON object or array of objects.' });
+    return issues;
+  }
+  // Handle @graph wrapper or top-level array
+  const nodes = [];
+  if (Array.isArray(parsed)) {
+    parsed.forEach(n => nodes.push(n));
+  } else if (Array.isArray(parsed['@graph'])) {
+    parsed['@graph'].forEach(n => nodes.push(n));
+    if (!parsed['@context']) issues.push({ level: 'warning', msg: 'Top-level <code>@graph</code> should also declare <code>@context</code>.' });
+  } else {
+    nodes.push(parsed);
+  }
+
+  for (const node of nodes) {
+    if (!node || typeof node !== 'object') {
+      issues.push({ level: 'error', msg: 'Each schema entry must be an object.' });
+      continue;
+    }
+    if (!node['@context']) {
+      // Acceptable inside @graph if parent had context
+      if (!Array.isArray(parsed) && !parsed['@graph']) {
+        issues.push({ level: 'error', msg: 'Missing <code>@context</code>. Schema.org JSON-LD requires it (typically <code>"https://schema.org"</code>).' });
+      }
+    } else {
+      const ctx = Array.isArray(node['@context']) ? node['@context'] : [node['@context']];
+      const hasSchemaOrg = ctx.some(c => typeof c === 'string' && /schema\.org/i.test(c));
+      if (!hasSchemaOrg) {
+        issues.push({ level: 'warning', msg: '<code>@context</code> does not reference schema.org.' });
+      }
+    }
+    if (!node['@type']) {
+      issues.push({ level: 'error', msg: 'Missing <code>@type</code>.' });
+    }
+    validateNode(node, '', issues);
+  }
+  return issues;
+}
+
+function extractFromHtml(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const blocks = [];
+
+  // JSON-LD
+  doc.querySelectorAll('script[type="application/ld+json"]').forEach((s, i) => {
+    const raw = s.textContent || '';
+    let parsed = null;
+    let parseError = null;
+    try {
+      // Strip HTML comments that sometimes wrap JSON-LD
+      const cleaned = raw.replace(/^\s*<!--/, '').replace(/-->\s*$/, '').trim();
+      parsed = JSON.parse(cleaned);
+    } catch (e) {
+      parseError = e.message;
+    }
+    blocks.push({ format: 'JSON-LD', index: i, raw, parsed, parseError });
+  });
+
+  // Microdata (itemscope) — count and surface
+  const microdataItems = doc.querySelectorAll('[itemscope][itemtype]');
+  if (microdataItems.length) {
+    const types = Array.from(microdataItems).map(el => el.getAttribute('itemtype'));
+    blocks.push({ format: 'Microdata', index: 0, microdata: true, types, count: microdataItems.length });
+  }
+
+  // RDFa
+  const rdfaItems = doc.querySelectorAll('[typeof]');
+  if (rdfaItems.length) {
+    const types = Array.from(rdfaItems).map(el => el.getAttribute('typeof'));
+    blocks.push({ format: 'RDFa', index: 0, rdfa: true, types, count: rdfaItems.length });
+  }
+
+  return blocks;
+}
+
+function flattenTypes(parsed) {
+  const out = [];
+  const walk = (n) => {
+    if (!n || typeof n !== 'object') return;
+    if (Array.isArray(n)) { n.forEach(walk); return; }
+    if (n['@type']) {
+      const t = Array.isArray(n['@type']) ? n['@type'] : [n['@type']];
+      t.forEach(x => out.push(x));
+    }
+    for (const v of Object.values(n)) {
+      if (v && typeof v === 'object') walk(v);
+    }
+  };
+  walk(parsed);
+  return out;
+}
+
+function analyze(html, url) {
+  const blocks = extractFromHtml(html);
+  const summary = $('summary');
+  const globalIssues = $('globalIssues');
+  const schemaList = $('schemaList');
+  $('resultsCard').style.display = '';
+  $('summaryCard').style.display = '';
+
+  if (!blocks.length) {
+    $('resultsCard').style.display = 'none';
+    summary.innerHTML = '<span class="pill red">No structured data found</span>';
+    globalIssues.innerHTML = '<div class="issue warning"><span class="ico">!</span><div>No JSON-LD, Microdata, or RDFa detected on this page.</div></div>';
+    return;
+  }
+
+  let totalErrors = 0, totalWarnings = 0, totalInfo = 0;
+  const topLevelTypes = [];
+  const renderedBlocks = [];
+
+  blocks.forEach((b, i) => {
+    if (b.microdata) {
+      renderedBlocks.push({
+        title: `Microdata (${b.count} item${b.count > 1 ? 's' : ''})`,
+        badge: b.format,
+        issues: [{ level: 'info', msg: `Microdata detected — this validator focuses on JSON-LD. Types found: ${[...new Set(b.types)].join(', ')}` }],
+        body: `<pre class="json">${escapeHtml(b.types.join('\n'))}</pre>`
+      });
+      totalInfo++;
+      return;
+    }
+    if (b.rdfa) {
+      renderedBlocks.push({
+        title: `RDFa (${b.count} item${b.count > 1 ? 's' : ''})`,
+        badge: b.format,
+        issues: [{ level: 'info', msg: `RDFa detected — this validator focuses on JSON-LD. Types found: ${[...new Set(b.types)].join(', ')}` }],
+        body: `<pre class="json">${escapeHtml(b.types.join('\n'))}</pre>`
+      });
+      totalInfo++;
+      return;
+    }
+    // JSON-LD
+    let issues = [];
+    let title = `JSON-LD #${b.index + 1}`;
+    let bodyHtml = '';
+    if (b.parseError) {
+      issues.push({ level: 'error', msg: `JSON parse error: <code>${escapeHtml(b.parseError)}</code>` });
+      bodyHtml = `<pre class="json">${escapeHtml(b.raw)}</pre>`;
+    } else {
+      const types = flattenTypes(b.parsed);
+      types.forEach(t => topLevelTypes.push(t));
+      const topTypes = getTypes(b.parsed) .concat(
+        Array.isArray(b.parsed && b.parsed['@graph']) ? b.parsed['@graph'].flatMap(n => getTypes(n)) : []
+      );
+      if (topTypes.length) title = `JSON-LD: ${topTypes.join(', ')}`;
+      issues = validateSchema(b.parsed);
+      bodyHtml = `<pre class="json">${highlightJson(b.parsed)}</pre>`;
+    }
+    issues.forEach(it => {
+      if (it.level === 'error') totalErrors++;
+      else if (it.level === 'warning') totalWarnings++;
+      else totalInfo++;
+    });
+    const allTypes = b.parsed ? flattenTypes(b.parsed) : [];
+    const isFAQ = allTypes.includes('FAQPage');
+    renderedBlocks.push({ title, badge: 'JSON-LD', issues, body: bodyHtml, isFAQ });
+  });
+
+  // Put FAQPage schemas first
+  renderedBlocks.sort((a, b) => (b.isFAQ === true) - (a.isFAQ === true));
+
+  // Duplicate detection across blocks
+  const counts = {};
+  topLevelTypes.forEach(t => { counts[t] = (counts[t] || 0) + 1; });
+  const duplicates = Object.entries(counts).filter(([_, c]) => c > 1);
+
+  // Summary pills
+  const total = renderedBlocks.length;
+  summary.innerHTML = [
+    `<span class="pill blue">${total} block${total === 1 ? '' : 's'}</span>`,
+    `<span class="pill purple">${topLevelTypes.length} type instance${topLevelTypes.length === 1 ? '' : 's'}</span>`,
+    totalErrors ? `<span class="pill red">${totalErrors} error${totalErrors === 1 ? '' : 's'}</span>` : `<span class="pill green">0 errors</span>`,
+    totalWarnings ? `<span class="pill amber">${totalWarnings} warning${totalWarnings === 1 ? '' : 's'}</span>` : `<span class="pill green">0 warnings</span>`,
+    duplicates.length ? `<span class="pill amber">${duplicates.length} duplicate type${duplicates.length === 1 ? '' : 's'}</span>` : ''
+  ].filter(Boolean).join('');
+
+  // Global issues (duplicates)
+  globalIssues.innerHTML = '';
+  if (duplicates.length) {
+    duplicates.forEach(([t, c]) => {
+      globalIssues.appendChild(makeIssue('warning', `Duplicate <code>@type</code>: <strong>${escapeHtml(t)}</strong> appears ${c} times across schemas. Verify this is intentional — duplicates may confuse search engines.`));
+    });
+  }
+
+  // Render blocks
+  schemaList.innerHTML = '';
+  renderedBlocks.forEach((b, i) => {
+    const errs = b.issues.filter(x => x.level === 'error').length;
+    const warns = b.issues.filter(x => x.level === 'warning').length;
+    const wrap = document.createElement('div');
+    wrap.className = 'schema-block' + (i === 0 ? ' open' : '');
+    const badgeHtml = errs ? `<span class="pill red">${errs} error${errs === 1 ? '' : 's'}</span>`
+      : warns ? `<span class="pill amber">${warns} warning${warns === 1 ? '' : 's'}</span>`
+      : `<span class="pill green">OK</span>`;
+    wrap.innerHTML = `
+      <div class="schema-head">
+        <div class="schema-title"><span class="chevron">▶</span> ${escapeHtml(b.title)}<span class="badge">${b.badge}</span></div>
+        <div>${badgeHtml}</div>
+      </div>
+      <div class="schema-body">
+        <div class="issues">${b.issues.map(i => issueHtml(i.level, i.msg)).join('') || '<div class="issue info"><span class="ico">i</span><div>No issues detected.</div></div>'}</div>
+        ${b.body}
+      </div>`;
+    wrap.querySelector('.schema-head').addEventListener('click', () => wrap.classList.toggle('open'));
+    schemaList.appendChild(wrap);
+  });
+}
+
+function makeIssue(level, msg) {
+  const div = document.createElement('div');
+  div.className = `issue ${level}`;
+  div.innerHTML = `<span class="ico">${level === 'error' ? '✕' : level === 'warning' ? '!' : 'i'}</span><div>${msg}</div>`;
+  return div;
+}
+function issueHtml(level, msg) {
+  return `<div class="issue ${level}"><span class="ico">${level === 'error' ? '✕' : level === 'warning' ? '!' : 'i'}</span><div>${msg}</div></div>`;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function highlightJson(obj) {
+  const json = JSON.stringify(obj, null, 2);
+  return escapeHtml(json)
+    .replace(/(&quot;[^&]*?&quot;)(\s*:)/g, '<span class="k">$1</span>$2')
+    .replace(/:\s*(&quot;[^&]*?&quot;)/g, ': <span class="s">$1</span>')
+    .replace(/:\s*(-?\d+\.?\d*)/g, ': <span class="n">$1</span>')
+    .replace(/:\s*(true|false|null)/g, ': <span class="b">$1</span>');
+}
+</script>
+</body>
+</html>
