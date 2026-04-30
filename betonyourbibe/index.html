@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bet On Your Bibe — Duck Race Randomizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0f9ff;
+    --card: #ffffff;
+    --text: #0c4a6e;
+    --muted: #64748b;
+    --border: #e0f2fe;
+    --accent: #0ea5e9;
+    --accent-dark: #0369a1;
+    --gold: #f59e0b;
+    --water: #38bdf8;
+    --water-dark: #0284c7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 100%);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  .back { display: inline-block; color: var(--muted); text-decoration: none; font-size: 0.9rem; margin-bottom: 1rem; }
+  .back:hover { color: var(--text); }
+
+  header { text-align: center; margin-bottom: 2rem; }
+  h1 {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--accent-dark);
+  }
+  h1 .duck { display: inline-block; animation: wobble 2s ease-in-out infinite; }
+  @keyframes wobble {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+  }
+  .subtitle { color: var(--muted); margin-top: 0.5rem; font-size: 1.05rem; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.75rem;
+    box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.1);
+    margin-bottom: 1.5rem;
+  }
+
+  label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
+  textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    background: #fff;
+    color: var(--text);
+    resize: vertical;
+    min-height: 200px;
+    transition: border-color 0.15s;
+  }
+  textarea:focus { outline: none; border-color: var(--accent); }
+
+  .controls {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  button {
+    padding: 0.85rem 1.75rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 1rem;
+    border: none;
+    transition: all 0.15s;
+  }
+  button.primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  }
+  button.primary:hover:not(:disabled) {
+    background: var(--accent-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(14, 165, 233, 0.4);
+  }
+  button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.secondary {
+    background: #fff;
+    color: var(--text);
+    border: 2px solid var(--border);
+  }
+  button.secondary:hover { background: var(--bg); }
+  .count { color: var(--muted); font-size: 0.95rem; margin-left: auto; }
+
+  select {
+    padding: 0.85rem 1rem;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 1rem;
+    background: #fff;
+    color: var(--text);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  select:focus { outline: none; border-color: var(--accent); }
+
+  /* Race track */
+  .race-card {
+    padding: 0;
+    overflow: hidden;
+    background: linear-gradient(180deg, #7dd3fc 0%, var(--water) 50%, var(--water-dark) 100%);
+    position: relative;
+  }
+  .race-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    background: rgba(3, 105, 161, 0.85);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    backdrop-filter: blur(6px);
+    z-index: 5;
+    position: relative;
+  }
+  .race-meta .timer { font-family: 'Fredoka', sans-serif; font-size: 1.1rem; }
+  .progress-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.25);
+    position: relative;
+    overflow: hidden;
+  }
+  .progress-bar .fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: linear-gradient(90deg, #fde047, #f59e0b);
+    width: 0%;
+    transition: width 0.2s linear;
+  }
+  .race-viewport {
+    position: relative;
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+  .race-viewport::-webkit-scrollbar { height: 10px; }
+  .race-viewport::-webkit-scrollbar-track { background: rgba(0,0,0,0.15); }
+  .race-viewport::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.6); border-radius: 5px; }
+  .race-viewport::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.85); }
+  .race-track {
+    position: relative;
+    padding: 1rem 0;
+    min-height: 200px;
+    width: 100%;
+  }
+  .scenery {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0.55;
+    font-size: 1.5rem;
+    z-index: 0;
+  }
+  .scenery.cloud { top: -2px; font-size: 1.8rem; opacity: 0.85; }
+  .distance-marker {
+    position: absolute;
+    top: 4px;
+    color: rgba(255,255,255,0.85);
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: rgba(0,0,0,0.25);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    z-index: 1;
+  }
+  .lane {
+    position: relative;
+    height: 56px;
+    border-bottom: 2px dashed rgba(255, 255, 255, 0.3);
+    overflow: visible;
+  }
+  .lane:last-child { border-bottom: none; }
+  .duck-runner {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    will-change: left;
+    text-align: center;
+    pointer-events: none;
+    width: 60px;
+  }
+  .duck-emoji {
+    display: inline-block;
+    font-size: 2.4rem;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.25));
+    animation: bob 0.4s ease-in-out infinite;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-4px) rotate(3deg); }
+  }
+  .duck-runner.frozen .duck-emoji { animation: none; }
+  .name-tag {
+    display: inline-block;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.1rem 0.45rem;
+    border-radius: 5px;
+    margin-top: 1px;
+    white-space: nowrap;
+    text-shadow: none;
+  }
+  .effect-badge {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.3rem;
+    margin-bottom: 2px;
+    animation: float-up 0.4s ease-out;
+    white-space: nowrap;
+  }
+  .effect-badge.text {
+    font-size: 0.7rem;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+  @keyframes float-up {
+    from { transform: translateX(-50%) translateY(8px); opacity: 0; }
+    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+  }
+  .duck-runner.boost .duck-emoji { filter: drop-shadow(0 0 12px #fde047) drop-shadow(0 4px 6px rgba(0,0,0,0.25)); animation-duration: 0.18s; }
+  .duck-runner.slow .duck-emoji { filter: drop-shadow(0 0 8px #6366f1) drop-shadow(0 4px 6px rgba(0,0,0,0.25)); animation-duration: 0.9s; opacity: 0.75; }
+  .duck-runner.dead .duck-emoji { animation: none; filter: grayscale(1) drop-shadow(0 4px 6px rgba(0,0,0,0.25)); }
+  .duck-runner.angel .duck-emoji { filter: drop-shadow(0 0 14px #fff) drop-shadow(0 0 8px #fde047); }
+
+  .surprise-box {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: 1.9rem;
+    z-index: 2;
+    animation: boxBounce 0.5s ease-in-out infinite alternate;
+    filter: drop-shadow(0 3px 5px rgba(0,0,0,0.4));
+    pointer-events: none;
+  }
+  @keyframes boxBounce {
+    from { transform: translate(-50%, -50%) scale(1) rotate(-5deg); }
+    to { transform: translate(-50%, -55%) scale(1.12) rotate(5deg); }
+  }
+  .surprise-box.popped { animation: popOut 0.4s forwards; }
+  @keyframes popOut {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    50% { transform: translate(-50%, -100%) scale(1.6); opacity: 1; }
+    100% { transform: translate(-50%, -120%) scale(0.5); opacity: 0; }
+  }
+  .finish-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    background: repeating-linear-gradient(
+      0deg,
+      #fff 0,
+      #fff 10px,
+      #000 10px,
+      #000 20px
+    );
+    z-index: 2;
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(255,255,255,0.4);
+  }
+  .finish-line::before {
+    content: '🏁';
+    position: absolute;
+    top: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.5rem;
+  }
+  .ripple {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 12px;
+    background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.2) 100%);
+    pointer-events: none;
+  }
+
+  /* Winner banner */
+  .winner-banner {
+    text-align: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 3px solid var(--gold);
+    border-radius: 16px;
+    margin-top: 1.5rem;
+    animation: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes pop {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .winner-banner .crown { font-size: 3rem; display: block; margin-bottom: 0.5rem; animation: spin 1.5s ease-in-out infinite; }
+  @keyframes spin { 0%, 100% { transform: rotate(-10deg) scale(1); } 50% { transform: rotate(10deg) scale(1.1); } }
+  .winner-banner h2 { font-family: 'Fredoka', sans-serif; font-size: 1.4rem; color: #92400e; margin-bottom: 0.4rem; }
+  .winner-banner .name { font-family: 'Fredoka', sans-serif; font-size: 2.4rem; font-weight: 700; color: #78350f; word-break: break-word; }
+
+  .leaderboard { margin-top: 1rem; }
+  .leaderboard h3 { font-size: 1rem; margin-bottom: 0.5rem; color: var(--muted); }
+  .leaderboard ol { list-style: none; counter-reset: rank; }
+  .leaderboard li {
+    counter-increment: rank;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .leaderboard li::before {
+    content: counter(rank);
+    font-weight: 700;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .leaderboard li:nth-child(1)::before { background: #fef3c7; color: #92400e; }
+  .leaderboard li:nth-child(2)::before { background: #e5e7eb; color: #374151; }
+  .leaderboard li:nth-child(3)::before { background: #fed7aa; color: #9a3412; }
+
+  /* Confetti */
+  .confetti-piece {
+    position: fixed;
+    top: -10px;
+    width: 10px;
+    height: 10px;
+    pointer-events: none;
+    z-index: 9999;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0.6; }
+  }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 2rem; }
+    .duck-runner { font-size: 2rem; }
+    .lane { height: 48px; }
+    .winner-banner .name { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../" class="back">← Back to tools</a>
+  <header>
+    <h1><span class="duck">🦆</span> Bet On Your Bibe</h1>
+    <p class="subtitle">Drop names, start the race, let the ducks decide.</p>
+  </header>
+
+  <div class="card">
+    <label for="names">Contestants (one name per line)</label>
+    <textarea id="names" placeholder="Clarisse&#10;Kevin&#10;Jaime&#10;Jamel&#10;Oli"></textarea>
+    <div class="controls">
+      <button class="primary" id="raceBtn">🏁 Start Race</button>
+      <button class="secondary" id="clearBtn">Clear</button>
+      <button class="secondary" id="sampleBtn">Sample Names</button>
+      <select id="duration" title="Race duration">
+        <option value="60">1:00</option>
+        <option value="90">1:30</option>
+        <option value="120" selected>2:00</option>
+        <option value="150">2:30</option>
+        <option value="180">3:00</option>
+        <option value="210">3:30</option>
+        <option value="240">4:00</option>
+        <option value="270">4:30</option>
+        <option value="300">5:00</option>
+      </select>
+      <span class="count" id="count">0 racers</span>
+    </div>
+  </div>
+
+  <div class="card race-card" id="raceCard" style="display:none;">
+    <div class="race-meta">
+      <span>🏊 Race in progress…</span>
+      <span class="timer" id="timer">0:00</span>
+    </div>
+    <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+    <div class="race-viewport" id="viewport">
+      <div class="race-track" id="track"></div>
+    </div>
+    <div class="ripple"></div>
+  </div>
+
+  <div id="resultsArea"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const DUCKS = ['🦆', '🐤', '🐥', '🦢'];
+
+function getNames() {
+  return $('names').value
+    .split(/\r?\n/)
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+function updateCount() {
+  const n = getNames().length;
+  $('count').textContent = `${n} racer${n === 1 ? '' : 's'}`;
+}
+
+$('names').addEventListener('input', updateCount);
+
+$('clearBtn').addEventListener('click', () => {
+  $('names').value = '';
+  $('raceCard').style.display = 'none';
+  $('resultsArea').innerHTML = '';
+  updateCount();
+});
+
+$('sampleBtn').addEventListener('click', () => {
+  $('names').value = ['Clarisse', 'Kevin', 'Jaime', 'Jamel', 'Oli', 'Wilfred', 'Yna', 'Rey', 'Grace', 'Michael', 'Poll', 'Rean', 'Ralph', 'Tricia', 'CJ', 'Laira', 'Rafael'].join('\n');
+  updateCount();
+});
+
+$('raceBtn').addEventListener('click', startRace);
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+async function startRace() {
+  const names = getNames();
+  if (names.length < 2) {
+    alert('Add at least 2 names to race!');
+    return;
+  }
+
+  const totalDurationSec = parseInt($('duration').value, 10);
+  const totalDurationMs = totalDurationSec * 1000;
+
+  $('raceBtn').disabled = true;
+  $('resultsArea').innerHTML = '';
+  $('raceCard').style.display = '';
+  $('progressFill').style.width = '0%';
+  $('timer').textContent = '0:00';
+
+  const viewport = $('viewport');
+  const track = $('track');
+  track.innerHTML = '';
+
+  await new Promise(r => requestAnimationFrame(r));
+  const viewportWidth = viewport.clientWidth;
+  const trackLength = Math.max(viewportWidth * 3, viewportWidth + (totalDurationSec / 30) * 600);
+  track.style.width = trackLength + 'px';
+  const finishLineX = trackLength - 80;
+
+  const finishLine = document.createElement('div');
+  finishLine.className = 'finish-line';
+  finishLine.style.left = finishLineX + 'px';
+  track.appendChild(finishLine);
+
+  // Distance markers + scenery
+  const totalLanes = names.length;
+  const trackHeight = totalLanes * 56;
+  const cloudEmojis = ['☁️', '⛅', '☀️'];
+  const sceneryEmojis = ['🪷', '🌿', '🪨', '🐟', '🦋'];
+  const numMarkers = Math.max(4, Math.floor(trackLength / 400));
+  for (let i = 1; i < numMarkers; i++) {
+    const x = (trackLength / numMarkers) * i;
+    const m = document.createElement('div');
+    m.className = 'distance-marker';
+    m.style.left = x + 'px';
+    m.textContent = `${Math.round((i / numMarkers) * 100)}%`;
+    track.appendChild(m);
+  }
+  const numScenery = Math.floor(trackLength / 120);
+  for (let i = 0; i < numScenery; i++) {
+    const s = document.createElement('div');
+    const isCloud = Math.random() < 0.3;
+    s.className = 'scenery' + (isCloud ? ' cloud' : '');
+    s.style.left = (Math.random() * (trackLength - 40)) + 'px';
+    if (isCloud) {
+      s.textContent = cloudEmojis[Math.floor(Math.random() * cloudEmojis.length)];
+    } else {
+      s.style.top = (20 + Math.random() * (trackHeight - 30)) + 'px';
+      s.textContent = sceneryEmojis[Math.floor(Math.random() * sceneryEmojis.length)];
+    }
+    track.appendChild(s);
+  }
+
+  // Build racers — base speed calibrated so an unaffected duck finishes near totalDurationMs
+  const baseSpeed = finishLineX / totalDurationMs; // px per ms
+  const racers = names.map((name, i) => ({
+    name,
+    lane: i,
+    laneY: i * 56 + 44,
+    position: 30,
+    baseSpeed: baseSpeed * (0.92 + Math.random() * 0.16), // ±8% variance
+    speedMul: 1,
+    speedMulUntil: 0,
+    pausedUntil: 0,
+    deadUntil: 0,
+    isAngel: false,
+    finished: false,
+    finishedAt: null,
+    place: null,
+    el: null,
+    emojiEl: null,
+    nameEl: null,
+    badgeTimers: []
+  }));
+
+  racers.forEach(r => {
+    const lane = document.createElement('div');
+    lane.className = 'lane';
+    const runner = document.createElement('div');
+    runner.className = 'duck-runner';
+    runner.dataset.lane = r.lane;
+    runner.innerHTML = `<span class="duck-emoji">${DUCKS[r.lane % DUCKS.length]}</span><br><span class="name-tag">${escapeHtml(r.name)}</span>`;
+    runner.style.left = r.position + 'px';
+    lane.appendChild(runner);
+    track.appendChild(lane);
+    r.el = runner;
+    r.emojiEl = runner.querySelector('.duck-emoji');
+    r.nameEl = runner.querySelector('.name-tag');
+  });
+
+  await new Promise(r => requestAnimationFrame(r));
+
+  const startTime = performance.now();
+  let lastFrame = startTime;
+  let placeCounter = 0;
+  let raceDone = false;
+  const boxes = []; // {id, lane, x, el}
+  let nextBoxAt = startTime + 2000 + Math.random() * 2000; // first box ~2-4s in
+  let nextEnvAt = startTime + 1500 + Math.random() * 2000; // first env event ~1.5-3.5s in
+  let boxId = 0;
+
+  function showBadge(racer, html, type, ms = 1500) {
+    const b = document.createElement('span');
+    b.className = 'effect-badge' + (type === 'text' ? ' text' : '');
+    b.innerHTML = html;
+    racer.el.appendChild(b);
+    const t = setTimeout(() => b.remove(), ms);
+    racer.badgeTimers.push(t);
+  }
+
+  function spawnBox(now) {
+    // Pick a random lane and an x ahead of slowest non-finished, behind finish line
+    const alive = racers.filter(r => !r.finished);
+    if (!alive.length) return;
+    const minX = Math.min(...alive.map(r => r.position)) + 60;
+    const maxX = finishLineX - 80;
+    if (maxX - minX < 50) return;
+    const lane = alive[Math.floor(Math.random() * alive.length)].lane;
+    const x = minX + Math.random() * (maxX - minX);
+    const el = document.createElement('div');
+    el.className = 'surprise-box';
+    el.style.left = x + 'px';
+    el.style.top = (lane * 56 + 44) + 'px';
+    el.textContent = '🎁';
+    track.appendChild(el);
+    boxes.push({ id: ++boxId, lane, x, el });
+  }
+
+  function applyBoxEffect(racer, now) {
+    const roll = Math.random();
+    if (roll < 0.22) {
+      // boost
+      racer.speedMul = 2.4;
+      racer.speedMulUntil = now + 2800;
+      racer.el.classList.add('boost');
+      showBadge(racer, '⚡ Speed Boost', 'text', 2800);
+      setTimeout(() => racer.el.classList.remove('boost'), 2800);
+    } else if (roll < 0.42) {
+      // slow
+      racer.speedMul = 0.35;
+      racer.speedMulUntil = now + 3000;
+      racer.el.classList.add('slow');
+      showBadge(racer, '🐌 Slow!', 'text', 3000);
+      setTimeout(() => racer.el.classList.remove('slow'), 3000);
+    } else if (roll < 0.58) {
+      // teleport back
+      racer.position = Math.max(0, racer.position - 220 - Math.random() * 120);
+      showBadge(racer, '⬅️ Teleport!', 'text', 1500);
+    } else if (roll < 0.74) {
+      // teleport forward
+      racer.position = Math.min(finishLineX - 30, racer.position + 280 + Math.random() * 200);
+      showBadge(racer, '➡️ Teleport!', 'text', 1500);
+    } else {
+      // die — revive as angel after 5s
+      racer.deadUntil = now + 5000;
+      racer.el.classList.add('dead');
+      racer.emojiEl.textContent = '🪦';
+      showBadge(racer, '💀 RIP! Dead!', 'text', 5000);
+      setTimeout(() => {
+        if (racer.finished) return;
+        racer.el.classList.remove('dead');
+        racer.el.classList.add('angel');
+        racer.emojiEl.textContent = '👼';
+        racer.isAngel = true;
+        racer.deadUntil = 0;
+        showBadge(racer, '✨ Revived!', 'text', 1800);
+      }, 5000);
+    }
+  }
+
+  function applyEnvEvent(now) {
+    const alive = racers.filter(r => !r.finished && r.deadUntil <= now && r.pausedUntil <= now);
+    if (!alive.length) return;
+    const r = alive[Math.floor(Math.random() * alive.length)];
+    const roll = Math.random();
+    if (roll < 0.4) {
+      r.pausedUntil = now + 3000;
+      r.el.classList.add('frozen');
+      showBadge(r, '🌊 Tsunami Attack', 'text', 3000);
+      setTimeout(() => r.el.classList.remove('frozen'), 3000);
+    } else if (roll < 0.75) {
+      r.pausedUntil = now + 2000;
+      r.el.classList.add('frozen');
+      showBadge(r, '⚡ Lightning Strike', 'text', 2000);
+      setTimeout(() => r.el.classList.remove('frozen'), 2000);
+    } else {
+      r.pausedUntil = now + 2000;
+      r.el.classList.add('frozen');
+      showBadge(r, '💩 Poop Break!', 'text', 2000);
+      setTimeout(() => r.el.classList.remove('frozen'), 2000);
+    }
+  }
+
+  function frame(now) {
+    const dt = now - lastFrame;
+    lastFrame = now;
+    const elapsed = now - startTime;
+
+    // Update timer + progress (based on leader vs finish line)
+    const leaderX = Math.max(...racers.map(r => r.position));
+    const pct = Math.min(100, (leaderX / finishLineX) * 100);
+    $('progressFill').style.width = pct + '%';
+    const sec = Math.floor(elapsed / 1000);
+    $('timer').textContent = `${Math.floor(sec / 60)}:${(sec % 60).toString().padStart(2, '0')}`;
+
+    // Spawn boxes frequently — scale with number of racers so everyone gets hit multiple times
+    if (now >= nextBoxAt && !raceDone) {
+      // Spawn 1-2 boxes at a time for variety, on different lanes
+      const burst = Math.random() < 0.4 ? 2 : 1;
+      for (let i = 0; i < burst; i++) spawnBox(now);
+      const base = Math.max(1500, 4500 - racers.length * 150);
+      nextBoxAt = now + base + Math.random() * 2500;
+    }
+    // Random env event frequently — independent per tick
+    if (now >= nextEnvAt && !raceDone) {
+      applyEnvEvent(now);
+      // Sometimes fire a second one immediately on a different duck
+      if (Math.random() < 0.3) applyEnvEvent(now);
+      const base = Math.max(1200, 3500 - racers.length * 120);
+      nextEnvAt = now + base + Math.random() * 2000;
+    }
+
+    // Move ducks
+    for (const r of racers) {
+      if (r.finished) continue;
+      // Expire active speed multiplier
+      if (r.speedMul !== 1 && now >= r.speedMulUntil) r.speedMul = 1;
+      // Skip if paused or dead (not yet revived)
+      if (now < r.pausedUntil) continue;
+      if (now < r.deadUntil) continue;
+      // Move
+      const speed = r.baseSpeed * r.speedMul * (r.isAngel ? 1.1 : 1);
+      r.position += speed * dt;
+      if (r.position >= finishLineX) {
+        r.position = finishLineX;
+        r.finished = true;
+        r.finishedAt = elapsed;
+        r.place = placeCounter++;
+      }
+      r.el.style.left = r.position + 'px';
+    }
+
+    // Check box collisions
+    for (let i = boxes.length - 1; i >= 0; i--) {
+      const box = boxes[i];
+      const r = racers[box.lane];
+      if (!r.finished && r.deadUntil <= now && r.position >= box.x) {
+        box.el.classList.add('popped');
+        setTimeout(() => box.el.remove(), 400);
+        boxes.splice(i, 1);
+        applyBoxEffect(r, now);
+      }
+    }
+
+    // Auto-scroll only when leader is pushing the right edge of the viewport,
+    // so users can scroll backward to watch laggards without being yanked.
+    const leaderViewportX = leaderX - viewport.scrollLeft;
+    if (leaderViewportX > viewportWidth * 0.7) {
+      viewport.scrollLeft = leaderX - viewportWidth * 0.5;
+    } else if (leaderViewportX < viewportWidth * 0.1 && leaderX > viewportWidth * 0.3) {
+      // Leader scrolled out of view to the left — snap forward
+      viewport.scrollLeft = leaderX - viewportWidth * 0.5;
+    }
+
+    if (racers.every(r => r.finished)) {
+      raceDone = true;
+      finishRace();
+      return;
+    }
+    requestAnimationFrame(frame);
+  }
+
+  async function finishRace() {
+    $('progressFill').style.width = '100%';
+    viewport.scrollTo({ left: trackLength - viewportWidth, behavior: 'smooth' });
+    await new Promise(r => setTimeout(r, 700));
+    const ranking = racers.slice().sort((a, b) => a.place - b.place);
+    showResults(ranking);
+    $('raceBtn').disabled = false;
+  }
+
+  requestAnimationFrame(frame);
+}
+
+function showResults(ranking) {
+  const winner = ranking[0];
+  const area = $('resultsArea');
+  area.innerHTML = `
+    <div class="winner-banner">
+      <span class="crown">👑</span>
+      <h2>Bet on this Bibe!</h2>
+      <div class="name">${escapeHtml(winner.name)}</div>
+    </div>
+    <div class="card leaderboard">
+      <h3>Final standings</h3>
+      <ol>
+        ${ranking.map(r => `<li>${escapeHtml(r.name)}</li>`).join('')}
+      </ol>
+    </div>
+  `;
+  fireConfetti();
+}
+
+function fireConfetti() {
+  const colors = ['#f59e0b', '#0ea5e9', '#ef4444', '#22c55e', '#a855f7', '#ec4899'];
+  for (let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+    piece.style.animationDelay = (Math.random() * 0.5) + 's';
+    piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+    if (Math.random() > 0.5) piece.style.borderRadius = '50%';
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 5000);
+  }
+}
+
+updateCount();
+</script>
+</body>
+</html>
