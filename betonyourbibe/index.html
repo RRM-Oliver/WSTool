@@ -166,7 +166,7 @@
   .race-viewport::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.85); }
   .race-track {
     position: relative;
-    padding: 1rem 0;
+    padding: 2.75rem 0 1rem;
     min-height: 200px;
     width: 100%;
   }
@@ -205,13 +205,31 @@
     will-change: left;
     text-align: center;
     pointer-events: none;
-    width: 60px;
+    width: 70px;
   }
   .duck-emoji {
     display: inline-block;
     font-size: 2.4rem;
+    line-height: 1;
     filter: drop-shadow(0 4px 6px rgba(0,0,0,0.25));
     animation: bob 0.4s ease-in-out infinite;
+    position: relative;
+  }
+  .duck-emoji img {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+  }
+  .duck-emoji img.halo {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 40px;
+    filter: drop-shadow(0 0 6px #fde047);
   }
   @keyframes bob {
     0%, 100% { transform: translateY(0) rotate(-3deg); }
@@ -219,16 +237,20 @@
   }
   .duck-runner.frozen .duck-emoji { animation: none; }
   .name-tag {
-    display: inline-block;
-    background: rgba(0,0,0,0.6);
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-right: 6px;
+    background: rgba(0,0,0,0.75);
     color: #fff;
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    padding: 0.1rem 0.45rem;
+    padding: 0.18rem 0.5rem;
     border-radius: 5px;
-    margin-top: 1px;
     white-space: nowrap;
     text-shadow: none;
+    z-index: 6;
   }
   .effect-badge {
     position: absolute;
@@ -426,7 +448,7 @@
 
 <script>
 const $ = id => document.getElementById(id);
-const DUCKS = ['🦆', '🐤', '🐥', '🦢'];
+const AVATARS = Array.from({ length: 33 }, (_, i) => `avatars/asset-${i + 1}.svg`);
 
 function getNames() {
   return $('names').value
@@ -535,7 +557,7 @@ async function startRace() {
     name,
     lane: i,
     laneY: i * 56 + 44,
-    position: 30,
+    position: 120,
     baseSpeed: baseSpeed * (0.92 + Math.random() * 0.16), // ±8% variance
     speedMul: 1,
     speedMulUntil: 0,
@@ -551,14 +573,19 @@ async function startRace() {
     badgeTimers: []
   }));
 
-  racers.forEach(r => {
+  // Shuffle avatars so each duck gets a unique one (cycle if more racers than avatars)
+  const shuffledAvatars = shuffle(AVATARS);
+  racers.forEach((r, i) => {
+    r.avatar = shuffledAvatars[i % shuffledAvatars.length];
     const lane = document.createElement('div');
     lane.className = 'lane';
     const runner = document.createElement('div');
     runner.className = 'duck-runner';
     runner.dataset.lane = r.lane;
-    runner.innerHTML = `<span class="duck-emoji">${DUCKS[r.lane % DUCKS.length]}</span><br><span class="name-tag">${escapeHtml(r.name)}</span>`;
+    runner.innerHTML = `<span class="name-tag">${escapeHtml(r.name)}</span><span class="duck-emoji"><img src="${r.avatar}" alt=""></span>`;
     runner.style.left = r.position + 'px';
+    // Higher lanes paint on top so their name-tags don't get covered by lower-lane avatars
+    runner.style.zIndex = 100 - r.lane;
     lane.appendChild(runner);
     track.appendChild(lane);
     r.el = runner;
@@ -632,13 +659,15 @@ async function startRace() {
       // die — revive as angel after 5s
       racer.deadUntil = now + 5000;
       racer.el.classList.add('dead');
-      racer.emojiEl.textContent = '🪦';
+      racer.emojiEl.innerHTML = '🪦';
       showBadge(racer, '💀 RIP! Dead!', 'text', 5000);
       setTimeout(() => {
         if (racer.finished) return;
         racer.el.classList.remove('dead');
         racer.el.classList.add('angel');
-        racer.emojiEl.textContent = '👼';
+        // Restore avatar with a halo overlay using a wrapper
+        racer.emojiEl.innerHTML = `<img src="${racer.avatar}" alt=""><img src="status/angel.svg" alt="" class="halo">`;
+        racer.emojiEl.style.position = 'relative';
         racer.isAngel = true;
         racer.deadUntil = 0;
         showBadge(racer, '✨ Revived!', 'text', 1800);
