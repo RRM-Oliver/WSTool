@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>May Something — Text Compare</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --text: #212529;
+    --muted: #6c757d;
+    --border: #e5e7eb;
+    --accent: #4338ca;
+    --green: #16a34a;
+    --green-bg: #dcfce7;
+    --red: #dc2626;
+    --red-bg: #fee2e2;
+    --amber: #d97706;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  .back { display: inline-block; color: var(--muted); text-decoration: none; font-size: 0.9rem; margin-bottom: 1rem; }
+  .back:hover { color: var(--text); }
+
+  header { text-align: center; margin-bottom: 2rem; }
+  h1 { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.025em; }
+  h1 .accent { color: var(--accent); }
+  .subtitle { color: var(--muted); margin-top: 0.5rem; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+  }
+
+  .pair-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .pair-header h2 { font-size: 1.05rem; font-weight: 600; }
+  .pair-header .actions { display: flex; gap: 0.5rem; }
+
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  @media (max-width: 768px) {
+    .compare-grid { grid-template-columns: 1fr; }
+  }
+
+  label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.88rem;
+    background: #fff;
+    color: var(--text);
+    resize: vertical;
+    min-height: 180px;
+    line-height: 1.5;
+  }
+  textarea:focus { outline: none; border-color: var(--accent); }
+
+  button {
+    padding: 0.6rem 1.1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 1px solid var(--accent);
+    transition: all 0.15s;
+  }
+  button.primary { background: var(--accent); color: #fff; }
+  button.primary:hover:not(:disabled) { background: #3730a3; }
+  button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.secondary { background: #fff; color: var(--text); border-color: var(--border); }
+  button.secondary:hover { background: var(--bg); }
+  button.danger { background: #fff; color: var(--red); border-color: #fecaca; }
+  button.danger:hover { background: var(--red-bg); }
+  button.advanced { background: #fff; color: var(--accent); border-color: var(--accent); }
+  button.advanced:hover { background: #eef2ff; }
+
+  .docx-panel {
+    display: none;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #eef2ff;
+    border: 1px dashed var(--accent);
+    border-radius: 10px;
+  }
+  .docx-panel.open { display: block; }
+  .docx-panel h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--accent);
+  }
+  .docx-panel .docx-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  @media (max-width: 768px) { .docx-panel .docx-row { grid-template-columns: 1fr; } }
+  .docx-drop {
+    background: #fff;
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .docx-drop:hover, .docx-drop.dragover { border-color: var(--accent); background: #eef2ff; color: var(--accent); }
+  .docx-drop.loaded { border-color: var(--green); background: #f0fdf4; color: var(--green); }
+  .docx-drop input[type=file] { display: none; }
+  .docx-drop .filename { font-weight: 600; margin-top: 0.25rem; word-break: break-all; }
+  .docx-status { margin-top: 0.5rem; font-size: 0.85rem; color: var(--muted); }
+  .docx-status.error { color: var(--red); }
+
+  .add-row {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0 1.5rem;
+  }
+  .add-row button {
+    padding: 0.85rem 1.5rem;
+    font-size: 0.95rem;
+    border-style: dashed;
+    border-width: 2px;
+  }
+
+  .diff-output {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    background: #fafafa;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.88rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+  .diff-output .added {
+    background: var(--green-bg);
+    color: #14532d;
+    padding: 0.05rem 0.25rem;
+    border-radius: 3px;
+    text-decoration: none;
+  }
+  .diff-output .removed {
+    background: var(--red-bg);
+    color: #7f1d1d;
+    padding: 0.05rem 0.25rem;
+    border-radius: 3px;
+    text-decoration: line-through;
+    text-decoration-color: rgba(127, 29, 29, 0.5);
+  }
+  .diff-output .unchanged { color: var(--text); }
+
+  .diff-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  @media (max-width: 768px) {
+    .diff-grid { grid-template-columns: 1fr; }
+  }
+  .diff-grid .diff-output h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .summary-pills { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .pill {
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: #fff;
+  }
+  .pill.green { color: var(--green); border-color: #bbf7d0; background: #f0fdf4; }
+  .pill.red { color: var(--red); border-color: #fecaca; background: #fef2f2; }
+  .pill.amber { color: var(--amber); border-color: #fde68a; background: #fffbeb; }
+  .pill.blue { color: var(--accent); border-color: #c7d2fe; background: #eef2ff; }
+
+  .options { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; font-size: 0.9rem; }
+  .options label { text-transform: none; letter-spacing: 0; color: var(--text); font-weight: 500; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+  .options input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; }
+
+  .empty-result { color: var(--muted); font-style: italic; text-align: center; padding: 1rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../" class="back">← Back to tools</a>
+  <header>
+    <h1>May <span class="accent">Something</span>?</h1>
+    <p class="subtitle">Compare two blocks of text — HTML tags ignored, only readable content matters.</p>
+  </header>
+
+  <div class="options card">
+    <label><input type="checkbox" id="optWords" checked> Word-level diff</label>
+    <label><input type="checkbox" id="optCase" checked> Case-sensitive</label>
+    <label><input type="checkbox" id="optWhitespace"> Show whitespace as ·</label>
+  </div>
+
+  <div id="pairs"></div>
+
+  <div class="add-row">
+    <button class="secondary" id="addPairBtn">＋ Compare another</button>
+  </div>
+</div>
+
+<template id="pairTpl">
+  <div class="card pair">
+    <div class="pair-header">
+      <h2>Comparison <span class="num"></span></h2>
+      <div class="actions">
+        <button class="primary compare">Compare</button>
+        <button class="advanced toggle-docx">📄 Advanced (.docx)</button>
+        <button class="secondary clear">Clear</button>
+        <button class="danger remove" style="display:none;">Remove</button>
+      </div>
+    </div>
+    <div class="docx-panel">
+      <h3>Compare two Word documents (.docx)</h3>
+      <div class="docx-row">
+        <div>
+          <div class="docx-drop docx-old">
+            <div class="hint">📄 Drop or click to upload <strong>Old.docx</strong></div>
+            <div class="filename" style="display:none;"></div>
+            <input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+          </div>
+        </div>
+        <div>
+          <div class="docx-drop docx-new">
+            <div class="hint">📄 Drop or click to upload <strong>New.docx</strong></div>
+            <div class="filename" style="display:none;"></div>
+            <input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+          </div>
+        </div>
+      </div>
+      <div class="docx-status"></div>
+    </div>
+    <div class="compare-grid">
+      <div>
+        <label>Old</label>
+        <textarea class="old" placeholder="Paste original text or HTML…"></textarea>
+      </div>
+      <div>
+        <label>New</label>
+        <textarea class="new" placeholder="Paste updated text or HTML…"></textarea>
+      </div>
+    </div>
+    <div class="summary-pills" style="display:none;"></div>
+    <div class="diff-grid" style="display:none;">
+      <div class="diff-output old-out"><h3>Old (removed highlighted)</h3><div class="content"></div></div>
+      <div class="diff-output new-out"><h3>New (added highlighted)</h3><div class="content"></div></div>
+    </div>
+  </div>
+</template>
+
+<script>
+const $ = s => document.querySelector(s);
+const pairsEl = document.getElementById('pairs');
+const tpl = document.getElementById('pairTpl');
+
+function stripHtml(input) {
+  if (!input) return '';
+  // If it doesn't look like it has tags, return as-is
+  if (!/<[^>]+>/.test(input)) return input;
+  const doc = new DOMParser().parseFromString(input, 'text/html');
+  // Remove script/style content entirely
+  doc.querySelectorAll('script, style, noscript').forEach(el => el.remove());
+  // Use textContent and normalize whitespace
+  let text = doc.body ? doc.body.textContent : doc.documentElement.textContent;
+  return text || '';
+}
+
+function tokenize(text, byWord) {
+  if (byWord) {
+    // Split on word boundaries, preserve whitespace as tokens so the result
+    // reads naturally when re-assembled.
+    return text.match(/\s+|[^\s]+/g) || [];
+  } else {
+    return Array.from(text);
+  }
+}
+
+// Classic LCS diff producing an ordered list of {type, value} ops.
+function diff(a, b) {
+  const n = a.length, m = b.length;
+  // Build LCS DP table. For very large inputs cap to avoid hangs.
+  const MAX = 4000;
+  if (n > MAX || m > MAX) {
+    // Fallback: simple split — show all-removed then all-added.
+    return [
+      ...a.map(v => ({ type: 'removed', value: v })),
+      ...b.map(v => ({ type: 'added', value: v }))
+    ];
+  }
+  const dp = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1));
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= m; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1] + 1
+        : Math.max(dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  const ops = [];
+  let i = n, j = m;
+  while (i > 0 && j > 0) {
+    if (a[i - 1] === b[j - 1]) {
+      ops.push({ type: 'unchanged', value: a[i - 1] });
+      i--; j--;
+    } else if (dp[i - 1][j] >= dp[i][j - 1]) {
+      ops.push({ type: 'removed', value: a[i - 1] });
+      i--;
+    } else {
+      ops.push({ type: 'added', value: b[j - 1] });
+      j--;
+    }
+  }
+  while (i > 0) { ops.push({ type: 'removed', value: a[i - 1] }); i--; }
+  while (j > 0) { ops.push({ type: 'added', value: b[j - 1] }); j--; }
+  return ops.reverse();
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function renderToken(s, showWhitespace) {
+  if (showWhitespace) {
+    return escapeHtml(s).replace(/ /g, '·').replace(/\n/g, '↵\n').replace(/\t/g, '→');
+  }
+  return escapeHtml(s);
+}
+
+function renderDiff(ops, side, showWhitespace) {
+  // side = 'old' (show unchanged + removed) or 'new' (show unchanged + added)
+  const out = [];
+  for (const op of ops) {
+    if (op.type === 'unchanged') {
+      out.push(`<span class="unchanged">${renderToken(op.value, showWhitespace)}</span>`);
+    } else if (op.type === 'removed' && side === 'old') {
+      out.push(`<span class="removed">${renderToken(op.value, showWhitespace)}</span>`);
+    } else if (op.type === 'added' && side === 'new') {
+      out.push(`<span class="added">${renderToken(op.value, showWhitespace)}</span>`);
+    }
+  }
+  return out.join('');
+}
+
+function runCompare(pairEl) {
+  const oldRaw = pairEl.querySelector('textarea.old').value;
+  const newRaw = pairEl.querySelector('textarea.new').value;
+  const byWord = $('#optWords').checked;
+  const caseSensitive = $('#optCase').checked;
+  const showWhitespace = $('#optWhitespace').checked;
+
+  let oldText = stripHtml(oldRaw);
+  let newText = stripHtml(newRaw);
+
+  // Normalize: collapse runs of whitespace to single space, but keep newlines
+  oldText = oldText.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  newText = newText.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+
+  let aTokens = tokenize(oldText, byWord);
+  let bTokens = tokenize(newText, byWord);
+
+  // For comparison, optionally lowercase but preserve original for display.
+  const aCmp = caseSensitive ? aTokens : aTokens.map(t => t.toLowerCase());
+  const bCmp = caseSensitive ? bTokens : bTokens.map(t => t.toLowerCase());
+
+  const ops = diff(aCmp, bCmp);
+  // Reattach original-cased values
+  let ai = 0, bi = 0;
+  for (const op of ops) {
+    if (op.type === 'unchanged') { op.value = aTokens[ai]; ai++; bi++; }
+    else if (op.type === 'removed') { op.value = aTokens[ai]; ai++; }
+    else if (op.type === 'added') { op.value = bTokens[bi]; bi++; }
+  }
+
+  // Stats — ignore pure-whitespace tokens for counting
+  const counts = { added: 0, removed: 0, unchanged: 0 };
+  for (const op of ops) {
+    if (/^\s+$/.test(op.value)) continue;
+    counts[op.type]++;
+  }
+
+  const summary = pairEl.querySelector('.summary-pills');
+  summary.style.display = '';
+  summary.innerHTML = (counts.added === 0 && counts.removed === 0)
+    ? `<span class="pill green">✓ Identical content</span>`
+    : [
+        `<span class="pill green">+${counts.added} added</span>`,
+        `<span class="pill red">−${counts.removed} removed</span>`,
+        `<span class="pill blue">${counts.unchanged} unchanged</span>`,
+      ].join('');
+
+  const grid = pairEl.querySelector('.diff-grid');
+  grid.style.display = '';
+  pairEl.querySelector('.old-out .content').innerHTML =
+    ops.length ? renderDiff(ops, 'old', showWhitespace) : '<div class="empty-result">— no content —</div>';
+  pairEl.querySelector('.new-out .content').innerHTML =
+    ops.length ? renderDiff(ops, 'new', showWhitespace) : '<div class="empty-result">— no content —</div>';
+}
+
+async function loadDocx(file, panel, dropEl, side, pairEl) {
+  const status = panel.querySelector('.docx-status');
+  status.classList.remove('error');
+  if (!file) return;
+  if (!/\.docx$/i.test(file.name)) {
+    status.classList.add('error');
+    status.textContent = `"${file.name}" is not a .docx file. Only Word .docx documents are supported.`;
+    return;
+  }
+  status.textContent = `Reading ${file.name}…`;
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.convertToHtml({ arrayBuffer });
+    const html = result.value || '';
+    pairEl.querySelector(`textarea.${side}`).value = html;
+    dropEl.classList.add('loaded');
+    dropEl.querySelector('.hint').style.display = 'none';
+    const fname = dropEl.querySelector('.filename');
+    fname.style.display = '';
+    fname.textContent = `✓ ${file.name}`;
+    // Auto-run compare if both sides loaded
+    const oldDrop = panel.querySelector('.docx-old');
+    const newDrop = panel.querySelector('.docx-new');
+    if (oldDrop.classList.contains('loaded') && newDrop.classList.contains('loaded')) {
+      status.textContent = 'Both documents loaded. Running comparison…';
+      runCompare(pairEl);
+      status.textContent = 'Done.';
+    } else {
+      status.textContent = `${file.name} loaded. Upload the other document to compare.`;
+    }
+  } catch (e) {
+    status.classList.add('error');
+    status.textContent = `Failed to read ${file.name}: ${e.message}`;
+  }
+}
+
+function wireDocxDrop(dropEl, panel, side, pairEl) {
+  const input = dropEl.querySelector('input[type=file]');
+  dropEl.addEventListener('click', e => {
+    if (e.target === input) return;
+    input.click();
+  });
+  input.addEventListener('change', () => {
+    if (input.files && input.files[0]) loadDocx(input.files[0], panel, dropEl, side, pairEl);
+  });
+  dropEl.addEventListener('dragover', e => { e.preventDefault(); dropEl.classList.add('dragover'); });
+  dropEl.addEventListener('dragleave', () => dropEl.classList.remove('dragover'));
+  dropEl.addEventListener('drop', e => {
+    e.preventDefault();
+    dropEl.classList.remove('dragover');
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) loadDocx(f, panel, dropEl, side, pairEl);
+  });
+}
+
+function makePair(index, removable) {
+  const node = tpl.content.firstElementChild.cloneNode(true);
+  node.querySelector('.num').textContent = `#${index}`;
+  node.querySelector('.compare').addEventListener('click', () => runCompare(node));
+  node.querySelector('.clear').addEventListener('click', () => {
+    node.querySelector('.old').value = '';
+    node.querySelector('.new').value = '';
+    node.querySelector('.summary-pills').style.display = 'none';
+    node.querySelector('.diff-grid').style.display = 'none';
+    // Reset docx drops too
+    node.querySelectorAll('.docx-drop').forEach(d => {
+      d.classList.remove('loaded');
+      d.querySelector('.hint').style.display = '';
+      d.querySelector('.filename').style.display = 'none';
+      d.querySelector('input[type=file]').value = '';
+    });
+    node.querySelector('.docx-status').textContent = '';
+  });
+
+  const panel = node.querySelector('.docx-panel');
+  node.querySelector('.toggle-docx').addEventListener('click', () => {
+    panel.classList.toggle('open');
+  });
+  wireDocxDrop(node.querySelector('.docx-old'), panel, 'old', node);
+  wireDocxDrop(node.querySelector('.docx-new'), panel, 'new', node);
+
+  const removeBtn = node.querySelector('.remove');
+  if (removable) {
+    removeBtn.style.display = '';
+    removeBtn.addEventListener('click', () => {
+      node.remove();
+      renumber();
+    });
+  }
+  return node;
+}
+
+function renumber() {
+  const pairs = pairsEl.querySelectorAll('.pair');
+  pairs.forEach((p, i) => {
+    p.querySelector('.num').textContent = `#${i + 1}`;
+  });
+}
+
+document.getElementById('addPairBtn').addEventListener('click', () => {
+  const idx = pairsEl.querySelectorAll('.pair').length + 1;
+  pairsEl.appendChild(makePair(idx, true));
+});
+
+// Seed with first pair
+pairsEl.appendChild(makePair(1, false));
+</script>
+</body>
+</html>
