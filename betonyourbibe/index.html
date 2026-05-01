@@ -292,6 +292,13 @@
     from { transform: translate(-50%, -50%) scale(1) rotate(-5deg); }
     to { transform: translate(-50%, -55%) scale(1.12) rotate(5deg); }
   }
+  .race-card.shake { animation: lolong-shake 0.18s ease-in-out infinite; }
+  @keyframes lolong-shake {
+    0%, 100% { transform: translateX(0) translateY(0); }
+    25% { transform: translateX(-5px) translateY(2px); }
+    50% { transform: translateX(5px) translateY(-2px); }
+    75% { transform: translateX(-3px) translateY(1px); }
+  }
   .surprise-box.popped { animation: popOut 0.4s forwards; }
   @keyframes popOut {
     0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
@@ -602,6 +609,7 @@ async function startRace() {
 
   // Shuffle avatars so each duck gets a unique one (cycle if more racers than avatars)
   const shuffledAvatars = shuffle(AVATARS);
+  const laneEls = [];
   racers.forEach((r, i) => {
     r.avatar = shuffledAvatars[i % shuffledAvatars.length];
     const lane = document.createElement('div');
@@ -611,10 +619,10 @@ async function startRace() {
     runner.dataset.lane = r.lane;
     runner.innerHTML = `<span class="name-tag">${escapeHtml(r.name)}</span><span class="duck-emoji"><img src="${r.avatar}" alt=""></span>`;
     runner.style.left = r.position + 'px';
-    // Higher lanes paint on top so their name-tags don't get covered by lower-lane avatars
     runner.style.zIndex = 100 - r.lane;
     lane.appendChild(runner);
     track.appendChild(lane);
+    laneEls.push(lane);
     r.el = runner;
     r.emojiEl = runner.querySelector('.duck-emoji');
     r.nameEl = runner.querySelector('.name-tag');
@@ -631,10 +639,12 @@ async function startRace() {
   let nextEnvAt = startTime + 1500 + Math.random() * 2000; // first env event ~1.5-3.5s in
   let boxId = 0;
   // Global once-per-race events
-  const tsunamiAt = startTime + (0.3 + Math.random() * 0.4) * totalDurationMs;
+  const tsunamiAt = startTime + (0.25 + Math.random() * 0.20) * totalDurationMs;
   let tsunamiDone = false;
   let heavensAt = null;
   let heavensDone = false;
+  const bagyongAt = startTime + (0.55 + Math.random() * 0.25) * totalDurationMs;
+  let bagyongDone = false;
 
   function showBadge(racer, html, type, ms = 1500) {
     const b = document.createElement('span');
@@ -672,7 +682,7 @@ async function startRace() {
   ];
   const ENV_EFFECTS = [
     { key: 'lightning', label: '⚡ Lightning Strike' },
-    { key: 'poop',      label: '💩 Poop Break!' }
+    { key: 'poop',      label: '💩 Break! Tae lang.' }
   ];
 
   function applyBoxEffect(racer, now) {
@@ -698,13 +708,16 @@ async function startRace() {
       showBadge(racer, choice.label, 'text', 3000);
       setTimeout(() => racer.el.classList.remove('slow'), 3000);
     } else if (choice.key === 'tp_back') {
-      racer.position = Math.max(0, racer.position - 220 - Math.random() * 120);
+      // Teleport 2-3 "frames" (duck-widths, ~56px each)
+      const frames = 2 + Math.floor(Math.random() * 2); // 2 or 3
+      racer.position = Math.max(0, racer.position - frames * 56);
       logEvent(racer, choice.label);
-      showBadge(racer, '⬅️ Teleport!', 'text', 1500);
+      showBadge(racer, `⬅️ Teleport ${frames}!`, 'text', 1500);
     } else if (choice.key === 'tp_forward') {
-      racer.position = Math.min(finishLineX - 30, racer.position + 280 + Math.random() * 200);
+      const frames = 2 + Math.floor(Math.random() * 2);
+      racer.position = Math.min(finishLineX - 30, racer.position + frames * 56);
       logEvent(racer, choice.label);
-      showBadge(racer, '➡️ Teleport!', 'text', 1500);
+      showBadge(racer, `➡️ Teleport ${frames}!`, 'text', 1500);
     } else if (choice.key === 'die') {
       racer.deadUntil = now + 5000;
       racer.el.classList.add('dead');
@@ -758,6 +771,35 @@ async function startRace() {
     }
   }
 
+  function triggerBagyongLolong(now) {
+    const racing = racers.filter(r => !r.finished);
+    if (racing.length < 2) return;
+    // Snapshot each racing duck's current (lane, x) — those slots will be redistributed
+    const slots = racing.map(r => ({ lane: r.lane, x: r.position }));
+    const shuffled = shuffle(slots);
+    // Shake the whole race card for drama
+    const card = document.getElementById('raceCard');
+    card.classList.add('shake');
+    setTimeout(() => card.classList.remove('shake'), 2200);
+    racing.forEach((r, i) => {
+      const slot = shuffled[i];
+      // Reassign duck to a new lane and inherit that slot's x progress
+      r.lane = slot.lane;
+      r.laneY = slot.lane * 56 + 44;
+      r.position = slot.x;
+      r.el.dataset.lane = slot.lane;
+      r.el.style.zIndex = 100 - slot.lane;
+      r.el.style.left = r.position + 'px';
+      // Move duck DOM into the new lane element
+      laneEls[slot.lane].appendChild(r.el);
+      r.pausedUntil = Math.max(r.pausedUntil, now + 2000);
+      r.el.classList.add('frozen');
+      setTimeout(() => r.el.classList.remove('frozen'), 2000);
+      logEvent(r, '🌀 Bagyong Lolong!');
+      showBadge(r, '🌀 Bagyong Lolong!', 'text', 2500);
+    });
+  }
+
   function triggerHeavensBlessing(now) {
     for (const r of racers) {
       if (r.finished) continue;
@@ -798,6 +840,11 @@ async function startRace() {
     if (heavensAt && !heavensDone && !raceDone && now >= heavensAt) {
       triggerHeavensBlessing(now);
       heavensDone = true;
+    }
+    // Global one-shot Bagyong Lolong — shuffle all racing positions
+    if (!bagyongDone && !raceDone && now >= bagyongAt) {
+      triggerBagyongLolong(now);
+      bagyongDone = true;
     }
 
     // Spawn boxes frequently — scale with number of racers so everyone gets hit multiple times
@@ -840,8 +887,8 @@ async function startRace() {
     // Check box collisions
     for (let i = boxes.length - 1; i >= 0; i--) {
       const box = boxes[i];
-      const r = racers[box.lane];
-      if (!r.finished && r.deadUntil <= now && r.position >= box.x) {
+      const r = racers.find(x => x.lane === box.lane && !x.finished);
+      if (r && r.deadUntil <= now && r.position >= box.x) {
         box.el.classList.add('popped');
         setTimeout(() => box.el.remove(), 400);
         boxes.splice(i, 1);
