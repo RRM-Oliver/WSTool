@@ -378,6 +378,24 @@
   .leaderboard li:nth-child(1)::before { background: #fef3c7; color: #92400e; }
   .leaderboard li:nth-child(2)::before { background: #e5e7eb; color: #374151; }
   .leaderboard li:nth-child(3)::before { background: #fed7aa; color: #9a3412; }
+  .leaderboard li::before { align-self: flex-start; margin-top: 0.1rem; flex-shrink: 0; }
+  .standing-row { display: flex; flex-direction: column; gap: 0.35rem; flex: 1; min-width: 0; }
+  .standing-name { font-weight: 600; }
+  .event-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .event-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    font-size: 0.78rem;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .event-pill strong { color: var(--accent-dark); font-weight: 700; }
+  .event-pill.quiet { color: var(--muted); font-style: italic; }
 
   /* Confetti */
   .confetti-piece {
@@ -570,8 +588,17 @@ async function startRace() {
     el: null,
     emojiEl: null,
     nameEl: null,
-    badgeTimers: []
+    badgeTimers: [],
+    events: {}
   }));
+
+  const EVENT_CAP = 2;
+  function logEvent(racer, label) {
+    racer.events[label] = (racer.events[label] || 0) + 1;
+  }
+  function canApply(racer, label) {
+    return (racer.events[label] || 0) < EVENT_CAP;
+  }
 
   // Shuffle avatars so each duck gets a unique one (cycle if more racers than avatars)
   const shuffledAvatars = shuffle(AVATARS);
@@ -603,6 +630,11 @@ async function startRace() {
   let nextBoxAt = startTime + 2000 + Math.random() * 2000; // first box ~2-4s in
   let nextEnvAt = startTime + 1500 + Math.random() * 2000; // first env event ~1.5-3.5s in
   let boxId = 0;
+  // Global once-per-race events
+  const tsunamiAt = startTime + (0.3 + Math.random() * 0.4) * totalDurationMs;
+  let tsunamiDone = false;
+  let heavensAt = null;
+  let heavensDone = false;
 
   function showBadge(racer, html, type, ms = 1500) {
     const b = document.createElement('span');
@@ -631,45 +663,63 @@ async function startRace() {
     boxes.push({ id: ++boxId, lane, x, el });
   }
 
+  const BOX_EFFECTS = [
+    { key: 'boost',      label: '⚡ Speed Boost' },
+    { key: 'slow',       label: '🐌 Slow!' },
+    { key: 'tp_back',    label: '⬅️ Teleport Back' },
+    { key: 'tp_forward', label: '➡️ Teleport Forward' },
+    { key: 'die',        label: '💀 St. Peter\'s Plan' }
+  ];
+  const ENV_EFFECTS = [
+    { key: 'lightning', label: '⚡ Lightning Strike' },
+    { key: 'poop',      label: '💩 Poop Break!' }
+  ];
+
   function applyBoxEffect(racer, now) {
-    const roll = Math.random();
-    if (roll < 0.22) {
-      // boost
+    // Filter to effects this racer hasn't hit the cap on
+    const allowed = BOX_EFFECTS.filter(e => canApply(racer, e.label));
+    if (!allowed.length) {
+      showBadge(racer, '🛡️ Immune', 'text', 1200);
+      return;
+    }
+    const choice = allowed[Math.floor(Math.random() * allowed.length)];
+    if (choice.key === 'boost') {
       racer.speedMul = 2.4;
       racer.speedMulUntil = now + 2800;
       racer.el.classList.add('boost');
-      showBadge(racer, '⚡ Speed Boost', 'text', 2800);
+      logEvent(racer, choice.label);
+      showBadge(racer, choice.label, 'text', 2800);
       setTimeout(() => racer.el.classList.remove('boost'), 2800);
-    } else if (roll < 0.42) {
-      // slow
+    } else if (choice.key === 'slow') {
       racer.speedMul = 0.35;
       racer.speedMulUntil = now + 3000;
       racer.el.classList.add('slow');
-      showBadge(racer, '🐌 Slow!', 'text', 3000);
+      logEvent(racer, choice.label);
+      showBadge(racer, choice.label, 'text', 3000);
       setTimeout(() => racer.el.classList.remove('slow'), 3000);
-    } else if (roll < 0.58) {
-      // teleport back
+    } else if (choice.key === 'tp_back') {
       racer.position = Math.max(0, racer.position - 220 - Math.random() * 120);
+      logEvent(racer, choice.label);
       showBadge(racer, '⬅️ Teleport!', 'text', 1500);
-    } else if (roll < 0.74) {
-      // teleport forward
+    } else if (choice.key === 'tp_forward') {
       racer.position = Math.min(finishLineX - 30, racer.position + 280 + Math.random() * 200);
+      logEvent(racer, choice.label);
       showBadge(racer, '➡️ Teleport!', 'text', 1500);
-    } else {
-      // die — revive as angel after 5s
+    } else if (choice.key === 'die') {
       racer.deadUntil = now + 5000;
       racer.el.classList.add('dead');
       racer.emojiEl.innerHTML = '🪦';
-      showBadge(racer, '💀 RIP! Dead!', 'text', 5000);
+      logEvent(racer, choice.label);
+      showBadge(racer, '💀 St. Peter\'s Plan Activate!', 'text', 5000);
       setTimeout(() => {
         if (racer.finished) return;
         racer.el.classList.remove('dead');
         racer.el.classList.add('angel');
-        // Restore avatar with a halo overlay using a wrapper
         racer.emojiEl.innerHTML = `<img src="${racer.avatar}" alt=""><img src="status/angel.svg" alt="" class="halo">`;
         racer.emojiEl.style.position = 'relative';
         racer.isAngel = true;
         racer.deadUntil = 0;
+        logEvent(racer, '✨ Revived');
         showBadge(racer, '✨ Revived!', 'text', 1800);
       }, 5000);
     }
@@ -679,22 +729,50 @@ async function startRace() {
     const alive = racers.filter(r => !r.finished && r.deadUntil <= now && r.pausedUntil <= now);
     if (!alive.length) return;
     const r = alive[Math.floor(Math.random() * alive.length)];
-    const roll = Math.random();
-    if (roll < 0.4) {
-      r.pausedUntil = now + 3000;
-      r.el.classList.add('frozen');
-      showBadge(r, '🌊 Tsunami Attack', 'text', 3000);
-      setTimeout(() => r.el.classList.remove('frozen'), 3000);
-    } else if (roll < 0.75) {
+    const allowed = ENV_EFFECTS.filter(e => canApply(r, e.label));
+    if (!allowed.length) return;
+    const choice = allowed[Math.floor(Math.random() * allowed.length)];
+    if (choice.key === 'lightning') {
       r.pausedUntil = now + 2000;
       r.el.classList.add('frozen');
-      showBadge(r, '⚡ Lightning Strike', 'text', 2000);
+      logEvent(r, choice.label);
+      showBadge(r, choice.label, 'text', 2000);
       setTimeout(() => r.el.classList.remove('frozen'), 2000);
     } else {
       r.pausedUntil = now + 2000;
       r.el.classList.add('frozen');
-      showBadge(r, '💩 Poop Break!', 'text', 2000);
+      logEvent(r, choice.label);
+      showBadge(r, choice.label, 'text', 2000);
       setTimeout(() => r.el.classList.remove('frozen'), 2000);
+    }
+  }
+
+  function triggerTsunami(now) {
+    for (const r of racers) {
+      if (r.finished) continue;
+      r.pausedUntil = Math.max(r.pausedUntil, now + 3000);
+      r.el.classList.add('frozen');
+      setTimeout(() => r.el.classList.remove('frozen'), 3000);
+      logEvent(r, '🌊 Tsunami Attack');
+      showBadge(r, '🌊 Tsunami Attack', 'text', 3000);
+    }
+  }
+
+  function triggerHeavensBlessing(now) {
+    for (const r of racers) {
+      if (r.finished) continue;
+      // Random positive effect per duck
+      const roll = Math.random();
+      if (roll < 0.55) {
+        r.speedMul = Math.max(r.speedMul, 2.0);
+        r.speedMulUntil = Math.max(r.speedMulUntil, now + 2500);
+        r.el.classList.add('boost');
+        setTimeout(() => r.el.classList.remove('boost'), 2500);
+      } else {
+        r.position = Math.min(finishLineX - 30, r.position + 180 + Math.random() * 160);
+      }
+      logEvent(r, '🌟 Heaven\'s Blessing');
+      showBadge(r, '🌟 Heaven\'s Blessing', 'text', 2500);
     }
   }
 
@@ -709,6 +787,18 @@ async function startRace() {
     $('progressFill').style.width = pct + '%';
     const sec = Math.floor(elapsed / 1000);
     $('timer').textContent = `${Math.floor(sec / 60)}:${(sec % 60).toString().padStart(2, '0')}`;
+
+    // Global one-shot tsunami
+    if (!tsunamiDone && !raceDone && now >= tsunamiAt) {
+      triggerTsunami(now);
+      tsunamiDone = true;
+      heavensAt = now + 3500;
+    }
+    // Heaven's Blessing follows the tsunami once it's cleared
+    if (heavensAt && !heavensDone && !raceDone && now >= heavensAt) {
+      triggerHeavensBlessing(now);
+      heavensDone = true;
+    }
 
     // Spawn boxes frequently — scale with number of racers so everyone gets hit multiple times
     if (now >= nextBoxAt && !raceDone) {
@@ -792,6 +882,18 @@ async function startRace() {
 function showResults(ranking) {
   const winner = ranking[0];
   const area = $('resultsArea');
+
+  const renderEvents = (events) => {
+    const entries = Object.entries(events);
+    if (!entries.length) {
+      return '<span class="event-pill quiet">😶 Uneventful run</span>';
+    }
+    entries.sort((a, b) => b[1] - a[1]);
+    return entries.map(([label, count]) =>
+      `<span class="event-pill">${label}${count > 1 ? ` <strong>×${count}</strong>` : ''}</span>`
+    ).join('');
+  };
+
   area.innerHTML = `
     <div class="winner-banner">
       <span class="crown">👑</span>
@@ -801,7 +903,14 @@ function showResults(ranking) {
     <div class="card leaderboard">
       <h3>Final standings</h3>
       <ol>
-        ${ranking.map(r => `<li>${escapeHtml(r.name)}</li>`).join('')}
+        ${ranking.map(r => `
+          <li>
+            <div class="standing-row">
+              <div class="standing-name">${escapeHtml(r.name)}</div>
+              <div class="event-list">${renderEvents(r.events)}</div>
+            </div>
+          </li>
+        `).join('')}
       </ol>
     </div>
   `;
